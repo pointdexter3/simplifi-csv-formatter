@@ -5,7 +5,7 @@
 Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing csv files from their banks.
 
 
-Simplify requires transaction imports be in a specific format.
+Simplifi requires transaction imports be in a specific format.
 
 |Date     |Payee    |Amount |Tags            |
 |---------|---------|-------|----------------|
