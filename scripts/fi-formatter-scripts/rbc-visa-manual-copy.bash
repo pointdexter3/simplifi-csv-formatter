@@ -56,10 +56,10 @@ sed -E 's/([0-9]+\.[0-9]+)/-\1/g' $filename >$filename.tmp && mv $filename.tmp $
 sed -E 's/--//g' $filename >$filename.tmp && mv $filename.tmp $filename
 
 # replace
-# (".*"),(".*"),(".*"),(".*")
+# (.*),(.*),(.*),(.*),(.*),,
 # with
 # "$1","$2","$3","from RBC VISA"
-sed -E 's/(.*),(.*),(.*),(.*),(.*)/"\1","\2","\3","from RBC VISA"/g' $filename >$filename.tmp && mv $filename.tmp $filename
+sed -E 's/(.*),(.*),(.*),(.*),(.*),,/"\1","\2","\3","from RBC VISA"/g' $filename >$filename.tmp && mv $filename.tmp $filename
 
 
 # append line to top of file
