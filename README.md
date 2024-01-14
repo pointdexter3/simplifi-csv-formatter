@@ -34,3 +34,15 @@ I will update the following table over time.
 
 
 # How to use:
+- git clone / download the repo
+
+## Download Transactions
+
+- Download transactions from your financial institutions desktop website
+- Select the CSV file option and save to the `/csv-raw` directory, make sure to overwrite the existing file for your corresponding financial institution (I can update support when I know the format of the CSV).
+
+## Run terminal command
+- Open terminal app on Mac
+- `cd` into the repo folder `csv-extractor` (Alternatively `right click the folder -> Services -> New Terminal At Folder`
+- Run `./format-all-financial-institutions.bash "2023-12-20"` (Where the date in quotes is the oldest transaction date you wish to import)
+
