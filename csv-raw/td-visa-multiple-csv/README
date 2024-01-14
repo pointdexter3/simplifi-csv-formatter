@@ -1,0 +1,9 @@
+
+** TD exports CSV's for the individual months **
+
+Download and save any individual month CSV's in this folder (naming doesn't matter)
+
+The TD formatter will search this folder and combine all .csv files. 
+
+Otherwise the td-visa file will be used similar to other csv files in the csv-raw folder.
+
