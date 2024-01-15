@@ -42,7 +42,6 @@ I will update the following table over time.
 - Select the CSV file option and save to the `/csv-raw` directory, overwrite the existing file(s) for your corresponding financial institution as the name is important (I can update support for other FI's when I know the format of their CSV export).
 
 ## Run terminal command
-- Open terminal app on Mac (Alternatively `right click the folder -> Services -> New Terminal At Folder`
-- `cd` into the repo folder `csv-extractor/scripts/` 
-- Run `./format-all-financial-institutions.bash "2023-12-20"` (Where the date in quotes is the oldest transaction date you wish to import)
+- Open terminal app on Mac and navigate to the `csv-extractor/scripts/` directory (Alternatively `right click the folder -> choose "Services" option -> choose "New Terminal At Folder"`
+- Run the bash script`./format-all-financial-institutions.bash "2023-12-20"` (Where the date in quotes is the oldest transaction date you wish to import)
 
