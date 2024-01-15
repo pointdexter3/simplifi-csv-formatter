@@ -39,7 +39,7 @@ I will update the following table over time.
 ## Download Transactions
 
 - Download transactions from your financial institutions desktop website
-- Select the CSV file option and save to the `/csv-raw` directory, make sure to overwrite the existing file for your corresponding financial institution as the name is important (I can update support for other FI's when I know the format of their CSV export).
+- Select the CSV file option and save to the `/csv-raw` directory, overwrite the existing file(s) for your corresponding financial institution as the name is important (I can update support for other FI's when I know the format of their CSV export).
 
 ## Run terminal command
 - Open terminal app on Mac (Alternatively `right click the folder -> Services -> New Terminal At Folder`
