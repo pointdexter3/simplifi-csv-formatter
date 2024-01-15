@@ -43,6 +43,6 @@ I will update the following table over time.
 
 ## Run terminal command
 - Open terminal app on Mac (Alternatively `right click the folder -> Services -> New Terminal At Folder`
-- `cd` into the repo folder `csv-extractor` 
+- `cd` into the repo folder `csv-extractor/scripts/` 
 - Run `./format-all-financial-institutions.bash "2023-12-20"` (Where the date in quotes is the oldest transaction date you wish to import)
 
