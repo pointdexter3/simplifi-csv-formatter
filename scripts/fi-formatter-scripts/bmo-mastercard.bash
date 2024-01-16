@@ -15,44 +15,41 @@ cp $original_filename $filename
 # delete lines 1,2,3 (including header, will add it back later)
 sed "1,3d" $filename >$filename.tmp && mv $filename.tmp $filename
 
-# INVERT NUMBERS (I DON'T KNOW HOW TO DO THIS PROPERLY)
-# add an extra minus sign (-) before all numbers with a decimal point
+# REMOVE INVALID CHARACTERS
+# replace all # with nothing
+sed -E 's/#//g' $filename >$filename.tmp && mv $filename.tmp $filename
+# replace regex (\[.*\]\s?) with nothing
+sed -E "s/\[.*\]\s?//g" $filename >$filename.tmp && mv $filename.tmp $filename
+# replace B/M with nothing
+sed -E "s/B\/M//g" $filename >$filename.tmp && mv $filename.tmp $filename
+# replace multiple spaces with single space
+sed -E "s/ +/ /g" $filename >$filename.tmp && mv $filename.tmp $filename
+
+# INVERT NUMBERS - add 'extra minus -, and then remove double minus --' (I DON'T KNOW HOW TO DO THIS PROPERLY)
 sed -E 's/([0-9]+\.[0-9]+)/-\1/g' $filename >$filename.tmp && mv $filename.tmp $filename
-# replace -- with nothing
 sed -E 's/--//g' $filename >$filename.tmp && mv $filename.tmp $filename
 
-# replace date format YYYYMMDD with YYYY-MM-DD but only for numbers that are 8 digits long without decimals
-# support multiple occurrences of YYYYMMDD in the same line
+# keep the last 3 columns, remove the rest. remove 2 if there are 5 columns, remove 3 if there are 6 columns
+awk -F, '{print $(NF-2) "," $(NF-1) "," $NF}' "$filename" > "$filename.tmp" && mv "$filename.tmp" "$filename"
+
+# replace date format YYYYMMDD with YYYY-MM-DD
 sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})/\1-\2-\3/g' $filename >$filename.tmp && mv $filename.tmp $filename
 
-if [ -n "$2" ]; then
+if [ -n "$3" ]; then
     # awk remove all lines where the date is before the from_date in column 3
-    awk -F, -v from_date="$from_date" '$3 >= from_date' $filename >$filename.tmp && mv $filename.tmp $filename
+    awk -F, -v from_date="$from_date" '$1 >= from_date' $filename >$filename.tmp && mv $filename.tmp $filename
 else
     echo "From date not supplied. All transactions returned"
 fi
 
-# replace date format YYYY-MM-DD with MM/DD/YYYY but only for numbers that are 8 digits long without decimals
-# support multiple occurrences of YYYY-MM-DD in the same line
+# replace date format YYYY-MM-DD with MM/DD/YYYY
 sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\2\/\3\/\1/g' $filename >$filename.tmp && mv $filename.tmp $filename
 
-# replace
-# (.*,.*),(\d{1,2}/\d{1,2}/\d{4}),(.*),(.*),(.*)
-# with
-# "$2","$5","$4","from BMO Mastercard"
-sed -E 's/(.*,.*),([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}),(.*),(.*),(.*)/"\2","\5","\4","from BMO Mastercard"/g' $filename >$filename.tmp && mv $filename.tmp $filename
+# add quotes, and add tag column
+sed -E 's/([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}),(.*),(.*)/"\1","\2","\3","from BMO Mastercard"/g' $filename >$filename.tmp && mv $filename.tmp $filename
 
-# replace all # with nothing
-sed -E 's/#//g' $filename >$filename.tmp && mv $filename.tmp $filename
-
-# replace multiple spaces with single space
-sed -E "s/ +/ /g" $filename >$filename.tmp && mv $filename.tmp $filename
-
-# bash sort file
+# SORT FILE
 sort -k1 -t, $filename >$filename.tmp && mv $filename.tmp $filename
 
-# delete all lines of the csv where
-
-# append line to top of file
-# "Date","Payee","Amount","Tags"
+# ADD HEADER
 (echo '"Date","Payee","Amount","Tags"' && cat $filename) >$filename.tmp && mv $filename.tmp $filename
