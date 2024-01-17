@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# import common functions (relative to this script)
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" && . "$script_dir/fi-formatter-common.bash"
+
 # run the command
 #  ./bmo-chequing.bash bmo-chequing.csv
 
@@ -15,16 +18,7 @@ cp $original_filename $filename
 #  delete first 6 lines (including header, will add it back later)
 sed "1,6d" $filename >$filename.tmp && mv $filename.tmp $filename
 
-# REMOVE INVALID CHARACTERS
-# replace all # with nothing
-sed -E 's/#//g' $filename >$filename.tmp && mv $filename.tmp $filename
-# replace regex (\[.*\]\s?) with nothing
-sed -E "s/\[.*\]\s?//g" $filename >$filename.tmp && mv $filename.tmp $filename
-# replace B/M with nothing
-sed -E "s/B\/M//g" $filename >$filename.tmp && mv $filename.tmp $filename
-# replace multiple spaces with single space
-sed -E "s/ +/ /g" $filename >$filename.tmp && mv $filename.tmp $filename
-
+removeInvalidCharacters $filename
 
 # keep the last 3 columns, remove the rest. remove 2 if there are 5 columns, remove 3 if there are 6 columns
 awk -F, '{print $(NF-2) "," $(NF-1) "," $NF}' "$filename" > "$filename.tmp" && mv "$filename.tmp" "$filename"
