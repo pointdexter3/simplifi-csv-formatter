@@ -3,14 +3,14 @@
 function removeInvalidCharacters() {
     local filename=$1
 
-    # replace dollar sign with nothing
-    sed -E 's/\$//g' $filename >$filename.tmp && mv $filename.tmp $filename
-    # replace all # with nothing
-    sed -E 's/#//g' $filename >$filename.tmp && mv $filename.tmp $filename
+    # replace $# with nothing
+    sed -E 's/\$//g; s/#//g' $filename >$filename.tmp && mv $filename.tmp $filename
+    
     # replace regex (\[.*\]\s?) with nothing
     sed -E "s/\[.*\]\s?//g" $filename >$filename.tmp && mv $filename.tmp $filename
     # replace B/M with nothing
     sed -E "s/B\/M//g" $filename >$filename.tmp && mv $filename.tmp $filename
+
     # replace multiple spaces with single space
     sed -E "s/ +/ /g" $filename >$filename.tmp && mv $filename.tmp $filename
 
