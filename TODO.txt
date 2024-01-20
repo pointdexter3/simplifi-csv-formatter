@@ -4,6 +4,11 @@
     (minimal logic changes)
 
 
+End goal:
+- adding additional institutions should require no code changes, defaulting to a common script.
+- budget application agnostic (Simplifi formatting after normalization should be swappable)
+
+
 Generalize logic: 
 
 - remove strangeness
@@ -13,7 +18,9 @@ Generalize logic:
     - [C/W], [D/N]
     - convert multiple spaces to single space
     
+- should support cross currency accounts (adding currency prefix should be an option, though Simplifi has no concept of currency type USD/CAD/etc other applications that use this may / or if I decide to switch budget apps).
 
+- Extract the Simplifi specific logic so it is more application agnostic.
 
 HEADER:
 - remove header and padding lines (also remove non-header titles like BMO)
@@ -39,6 +46,7 @@ Dates:
     - MM/DD/YYYY
     - YYYY-MM-DD
     - YYYYMMDD
+
 
 
 
