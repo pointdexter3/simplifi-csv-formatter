@@ -11,6 +11,13 @@ End goal:
 
 Generalize logic: 
 
+- subfolders containing individual files should be combined into file in the parent (which will then be formatted)
+    - should occur for all insitutions / accounts (not just TD)
+    - starting assuption:
+        - file in parent can be overwritten by the combined files
+        - individual child files don't have duplicate transactions
+    - remove headers from child files (if they exist)
+
 - remove strangeness
     - commas between quotes (remove them)
     - check if columns already have quotes (if so, remove them)
