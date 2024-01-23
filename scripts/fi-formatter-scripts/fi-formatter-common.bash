@@ -18,6 +18,15 @@ function remove_noise() {
     sed -E -e 's/["'\'']//g' -e 's/\, +/,/g' -e 's/ +\,/,/g' -e 's/ +$//g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
+# Make positive decimal numbers negative and visa versa.
+function invert_numbers() {
+    local filename=$1
+    local temp_file=$(mktemp "$filename.XXXXXXXXXX")
+    # INVERT NUMBERS - add 'extra minus -, and then remove double minus --' (I DON'T KNOW HOW TO DO THIS PROPERLY)
+    sed -E 's/([0-9]+\.[0-9]+)/-\1/g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+    sed -E 's/--//g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+}
+
 function filter_by_date() {
     local filename=$1
     local from_date=$2
@@ -38,9 +47,9 @@ function filter_by_date() {
 # Columns are specified as a comma-separated string of integers.
 # For example, to keep the first, third, and fifth columns, use "1,3,5".
 function keep_columns() {
-    local input_file=$1
+    local filename=$1
     local columns_to_keep=$2
-    local temp_file=$(mktemp "$input_file.XXXXXXXXXX")
+    local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
     if [[ ! "$columns_to_keep" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]]; then
         echo "Error: Columns to keep must be a comma-separated string of integers starting from 1."
@@ -59,7 +68,7 @@ function keep_columns() {
         }
         print ""
                 
-    }' "$input_file" >"$temp_file" && mv "$temp_file" "$input_file"
+    }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
 sort_by_date() {
@@ -70,9 +79,9 @@ sort_by_date() {
 
     if [[ -n "$date_column" ]]; then
         if [[ "$reverse_sort" -eq 1 ]]; then
-            sort -k"$date_column" -t, -r "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+            sort -k"$date_column","$date_column"n -t, -r "$filename" >"$temp_file" && mv "$temp_file" "$filename"
         else
-            sort -k"$date_column" -t, "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+            sort -k"$date_column","$date_column"n -t, "$filename" >"$temp_file" && mv "$temp_file" "$filename"
         fi
     else
         echo "Date column not supplied. File not sorted"
@@ -165,7 +174,6 @@ function simplifi_add_tag_column() {
     local simplifi_tag=""
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
-
     if [ "$tag_from_filename" -eq 1 ]; then
         simplifi_tag="from $(basename -- "$filename" | sed 's/\.[^.]*$//' | sed 's/-formatted$//')"
     fi
@@ -179,18 +187,35 @@ function simplifi_rearrange_columns() {
 
     # Use awk to detect column formats, rearrange columns
     awk -F, 'BEGIN{OFS=","} {
-        # Assume initial order as date, number, string
-        date_col = $1
-        number_col = $2
-        string_col = $3
+        if (NR == 1) {
+            # Save the original order for the first line
+            original_order = $0
 
-        # Check the format of each column
-        if (date_col ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ && number_col ~ /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/ && string_col ~ /^[^0-9]+$/) {
-            # Columns are in the expected format, rearrange
-            printf("%s,%s,%s", date_col, string_col, number_col)
+            # Find the positions of date, number, and string columns in the first line
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) {
+                    date_position = i
+                } else if ($i ~ /^[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?$/) {
+                    number_position = i
+                } else {
+                    string_position = i
+                }
+            }
+
+            # Check if all positions are found
+            if (date_position && number_position && string_position) {
+                # Columns in the expected format for the first line, rearrange
+                header_positions[date_position] = 1
+                header_positions[string_position] = 2
+                header_positions[number_position] = 3
+                printf("%s,%s,%s", $header_positions[1], $header_positions[2], $header_positions[3])
+            } else {
+                # TODO: ELSE MAY(?) NOT WORK... need to verify
+                print $original_order "ERROR"
+            }
         } else {
-            # Columns are not in the expected format, keep as is
-            print $0
+            # Process subsequent lines based on the saved positions
+            printf("%s,%s,%s", $header_positions[1], $header_positions[2], $header_positions[3])
         }
         print ""
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
@@ -203,7 +228,7 @@ function simplifi_date {
     sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\2\/\3\/\1/g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
-simplifi_add_double_quotes() {
+function simplifi_add_double_quotes() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 

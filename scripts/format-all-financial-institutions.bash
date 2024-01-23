@@ -49,6 +49,9 @@ function process_fi_csv_file {
     local csv_filename="$1"
     local script_filename="$2"
     local from_date=$3
+    local tag_from_filename=$4
+    local keep_columns=$5
+    local invert_numbers=$6
     local script_dir="$PWD"
 
     # optional script_filename parameter, if not empty string, use it, otherwise use default
@@ -65,9 +68,11 @@ function process_fi_csv_file {
     if check_file_exists "$csv_filename"; then
       if check_file_exists_and_not_empty "$csv_filename"; then
         echo "File FOUND:       '$csv_filename'"
-        "$script_dir/fi-formatter-scripts/$script_filename" "$csv_filename" "$script_dir/../generated" "$from_date"
+        "$script_dir/fi-formatter-scripts/$script_filename" "$csv_filename" "$script_dir/../generated" \
+          "$from_date" "$tag_from_filename" "$keep_columns" "$invert_numbers"
       elif allow_empty_file_exception "$csv_filename"; then
-        "$script_dir/fi-formatter-scripts/$script_filename" "$csv_filename" "$script_dir/../generated" "$from_date"
+        "$script_dir/fi-formatter-scripts/$script_filename" "$csv_filename" "$script_dir/../generated" \
+          "$from_date" "$tag_from_filename" "$keep_columns" "$invert_numbers"
       else
         echo "File EMPTY:       '$csv_filename'"
       fi
@@ -77,12 +82,12 @@ function process_fi_csv_file {
   )
 }
 
-process_fi_csv_file "bmo-chequing.csv" "" "$from_date"
-process_fi_csv_file "bmo-mastercard.csv" "" "$from_date"
-process_fi_csv_file "pc-financial-mastercard.csv" "" "$from_date"
-process_fi_csv_file "scotiabank-visa.csv" "" "$from_date"
-process_fi_csv_file "td-visa.csv" "" "$from_date"
-process_fi_csv_file "tangerine-chequing.csv" "" "$from_date"
-process_fi_csv_file "tangerine-savings.csv" "" "$from_date"
-process_fi_csv_file "rbc-visa-csv-export.csv" "" "$from_date"
-process_fi_csv_file "rbc-visa-manual-copy.csv" "" "$from_date"
+process_fi_csv_file "bmo-chequing.csv" "generic.bash" "$from_date" "0" "3,4,5"
+process_fi_csv_file "bmo-mastercard.csv" "generic.bash" "$from_date" "0" "3,5,6" "invert numbers"
+# process_fi_csv_file "pc-financial-mastercard.csv" "" "$from_date"
+# process_fi_csv_file "scotiabank-visa.csv" "" "$from_date"
+# process_fi_csv_file "td-visa.csv" "" "$from_date"
+# process_fi_csv_file "tangerine-chequing.csv" "" "$from_date"
+# process_fi_csv_file "tangerine-savings.csv" "" "$from_date"
+# process_fi_csv_file "rbc-visa-csv-export.csv" "" "$from_date"
+# process_fi_csv_file "rbc-visa-manual-copy.csv" "" "$from_date"
