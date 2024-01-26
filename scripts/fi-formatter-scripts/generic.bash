@@ -10,6 +10,7 @@ from_date=$3
 tag_from_filename=$4
 keep_columns=$5
 invert_numbers=$6
+original_date_column_num=$7
 filename="$output_directory/${original_filename%.*}-formatted.${original_filename##*.}"
 
 # copy file
@@ -20,13 +21,18 @@ delete_header_and_message_lines $filename
 remove_noise $filename
 normalize_dates $filename
 
+if [[ ! -n "$original_date_column_num" ]]; then
+    echo "original_date_column_num must be provided"
+    exit 1
+fi
+
 # Institutions sometimes use positive numbers for credit transactions
 if [[ -n "$invert_numbers" ]]; then
     invert_numbers $filename
 fi
 
-filter_by_date $filename $from_date 3
-sort_by_date $filename 3
+# filter_by_date $filename $from_date $original_date_column_num
+sort_by_date $filename $original_date_column_num
 
 # Insititution && Product Specific
 keep_columns $filename "$keep_columns"

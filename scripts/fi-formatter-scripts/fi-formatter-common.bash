@@ -4,6 +4,10 @@ function remove_noise() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
+    # remove windows CRLF as it causes issues (newline)
+    tr -d '\r' < "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+
+    # remove $, #, [anything], replace multiple spaces with one space 
     sed -E -e 's/\$//g' \
         -e 's/#//g' \
         -e 's/\[.*\]\s?//g' \
@@ -16,6 +20,9 @@ function remove_noise() {
 
     # remove single quotes, double quotes, remove leading and trailing spaces in each column. remove spaces at end of line
     sed -E -e 's/["'\'']//g' -e 's/\, +/,/g' -e 's/ +\,/,/g' -e 's/ +$//g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+
+    # remove empty lines
+    sed '/^[[:space:]]*$/d' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
 # Make positive decimal numbers negative and visa versa.
@@ -71,7 +78,7 @@ function keep_columns() {
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
-sort_by_date() {
+function sort_by_date() {
     local filename=$1
     local date_column=$2
     local reverse_sort=$3
@@ -90,7 +97,7 @@ sort_by_date() {
 
 # Find the first line that matches a date pattern and delete all lines above it.
 # pattern finds a date (any format) AND a decimal number in the same line
-delete_header_and_message_lines() {
+function delete_header_and_message_lines() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
     # date and decimal number in the same line, any order
@@ -120,51 +127,52 @@ function normalize_dates() {
     awk -F, 'BEGIN{OFS=","} {
         for(i=1; i<=NF; i++) {
             # Check for YYYY-MM-DD format
-            if ($i ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) {
+            if ($i ~ /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/) {
                 # Do nothing
             }
             # Check for MM/DD/YYYY format
-            else if ($i ~ /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/) {
+            else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
                 split($i, date, "/")
-                $i = date[3] "-" date[1] "-" date[2]
+                $i = sprintf("%04d-%02d-%02d", date[3], date[1], date[2])
             }
             # Check for YYYYMMDD format
             else if ($i ~ /^[0-9]{8}$/) {
-                $i = substr($i, 1, 4) "-" substr($i, 5, 2) "-" substr($i, 7, 2)
+                $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
             }
             # Check for DD/MM/YYYY format
-            else if ($i ~ /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/) {
+            else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
                 split($i, date, "/")
-                $i = date[3] "-" date[2] "-" date[1]
+                $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
             }
             # Check for DD-MM-YYYY format
-            else if ($i ~ /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/) {
+            else if ($i ~ /^[0-9]{1,2}-[0-9]{1,2}-[0-9]{4}$/) {
                 split($i, date, "-")
-                $i = date[3] "-" date[2] "-" date[1]
+                $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
             }
             # Check for DD.MM.YYYY format
-            else if ($i ~ /^[0-9]{2}\.[0-9]{2}\.[0-9]{4}$/) {
+            else if ($i ~ /^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4}$/) {
                 split($i, date, ".")
-                $i = date[3] "-" date[2] "-" date[1]
+                $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
             }
             # Check for DDMMYYYY format
             else if ($i ~ /^[0-9]{8}$/) {
-                $i = substr($i, 1, 4) "-" substr($i, 5, 2) "-" substr($i, 7, 2)
+                $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
             }
             # Check for YYYY/MM/DD format
-            else if ($i ~ /^[0-9]{4}\/[0-9]{2}\/[0-9]{2}$/) {
+            else if ($i ~ /^[0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2}$/) {
                 split($i, date, "/")
-                $i = date[1] "-" date[2] "-" date[3]
+                $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
             }
             # Check for YYYY.MM.DD format
-            else if ($i ~ /^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$/) {
+            else if ($i ~ /^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}$/) {
                 split($i, date, ".")
-                $i = date[1] "-" date[2] "-" date[3]
+                $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
             }
         }
         print
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
+
 
 # For bulk import, add a tag column to the CSV file.
 # This makes reviewing transactions that are categoized in Simplifi easier.
@@ -208,16 +216,20 @@ function simplifi_rearrange_columns() {
                 header_positions[date_position] = 1
                 header_positions[string_position] = 2
                 header_positions[number_position] = 3
-                printf("%s,%s,%s", $header_positions[1], $header_positions[2], $header_positions[3])
+                printf("%s,%s,%s\n", $header_positions[1], $header_positions[2], $header_positions[3])
             } else {
-                # TODO: ELSE MAY(?) NOT WORK... need to verify
-                print $original_order "ERROR"
+                # print $original_order "ERROR"
+                printf("%s %s\n", "ERROR: original_order not defined:", 777)
             }
         } else {
             # Process subsequent lines based on the saved positions
-            printf("%s,%s,%s", $header_positions[1], $header_positions[2], $header_positions[3])
+            if (header_positions[1] && header_positions[2] && header_positions[3]) {
+                printf("%s,%s,%s\n", $header_positions[1], $header_positions[2], $header_positions[3])
+            } else {
+                # Handle the case where header_positions are not defined
+                printf "ERROR: header_positions not defined\n"
+            }
         }
-        print ""
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
 
