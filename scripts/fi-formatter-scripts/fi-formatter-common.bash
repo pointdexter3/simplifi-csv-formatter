@@ -1,13 +1,34 @@
 #!/bin/bash
 
+# get the new position of a column after keep_columns() is executed.
+# assume the column exists in the list of columns_to_keep
+function get_new_column_position() {
+    local original_column_num="$1"
+    local columns_to_keep="$2"
+
+    # Split the columns into an array
+    IFS=',' read -ra columns_array <<<"$columns_to_keep"
+
+    # Find the index of the original column in the array
+    for i in "${!columns_array[@]}"; do
+        if [[ "${columns_array[$i]}" -eq "$original_column_num" ]]; then
+            new_column_index="$i"
+            break
+        fi
+    done
+
+    # Increment the index by 1 to get the new position
+    echo "$((new_column_index + 1))"
+}
+
 function remove_noise() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
     # remove windows CRLF as it causes issues (newline)
-    tr -d '\r' < "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+    tr -d '\r' <"$filename" >"$temp_file" && mv "$temp_file" "$filename"
 
-    # remove $, #, [anything], replace multiple spaces with one space 
+    # remove $, #, [anything], replace multiple spaces with one space
     sed -E -e 's/\$//g' \
         -e 's/#//g' \
         -e 's/\[.*\]\s?//g' \
@@ -101,12 +122,147 @@ function delete_header_and_message_lines() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
     # date and decimal number in the same line, any order
-    date_pattern='^.*?((?:[0-9]{4}[-\/.][0-9]{2}[-\/.][0-9]{2}|[0-9]{8}|[0-9]{2}[-\/.][0-9]{2}[-\/.][0-9]{4}|[0-9]{4}[-\/.][0-9]{2}[-\/.][0-9]{2}).*?[0-9]+\.[0-9]+|[0-9]+\.[0-9]+.*?(?:[0-9]{4}[-\/.][0-9]{2}[-\/.][0-9]{2}|[0-9]{8}|[0-9]{2}[-\/.][0-9]{2}[-\/.][0-9]{4}|[0-9]{4}[-\/.][0-9]{2}[-\/.][0-9]{2})).*$'
+    date_pattern='^.*?((?:[0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{8}|[0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{4}|[0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}).*?[0-9]+\.[0-9]+|[0-9]+\.[0-9]+.*?(?:[0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{8}|[0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{4}|[0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2})).*$'
     # Use grep to find the line number of the first line containing a date
     date_line=$(grep -En "$date_pattern" "$filename" | head -n 1 | cut -d ':' -f 1)
     # Use sed to delete all lines above the line matching the regex
     sed -n "${date_line},$ p" "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
+
+function determine_date_format() {
+    local filename=$1
+    local found_format="UNKNOWN"
+    local ambiguous_default_format="USA"
+    local override_condition=false
+
+    # List of words that, if present in the filename, will trigger the override
+    local override_keywords=("bmo")
+
+    # Check if any of the override keywords are present in the filename
+    for keyword in "${override_keywords[@]}"; do
+        if [[ $filename == *"$keyword"* ]]; then
+            override_condition=true
+            break
+        fi
+    done
+
+    is_single_line=$(awk 'END{print (NR==1) ? "true" : "false"}' "$filename")
+
+    # Use awk to process the lines from the file
+    found_format=$(awk -v is_single_line="$is_single_line" -v override="$override_condition" -v ambiguous_default_format="$ambiguous_default_format" -F, '
+    BEGIN {
+        OFS=",";
+        found="false";
+        last_line=(is_single_line == "true") ? "true" : "false";
+    }
+    # MAIN PROCESSING LOGIC
+    {    
+        # ITERATE THROUGH COLUMNS OF CURRENT LINE
+        for(i=1; i<=NF; i++) {
+            if (found == "false") {
+
+                # DETERMINE IF COLUMN IS ON LAST LINE
+                if (i == NF && NR == FNR) {
+                    last_line="true"
+                }
+
+                if ($i ~ /^([0-9]{1,2})[\/.-]+([0-9]{1,2})[\/.-]+([0-9]{4})$/) {
+                    split($i, date, "/")
+
+                    if (date[1] > 12) {
+                        print "DD/MM/YYYY"
+                        found="true"
+                        exit
+                    }
+                    if (date[2] > 12) {
+                        print "MM/DD/YYYY"
+                        found="true"
+                        exit
+                    }
+
+                    # LAST LINE DEFAULT TO AMBIGUOUS DATES (where months or dates cannot be certain)
+                    if (found == "false" && last_line=="true"){
+                        if (ambiguous_default_format=="USA") {
+                            print "MM/DD/YYYY"
+                        } else {
+                            print "DD/MM/YYYY"
+                        }
+                        found="true"
+                        exit
+                    }
+                }
+
+                if ($i ~ /^([0-9]{4})[\/.-]+([0-9]{1,2})[\/.-]+([0-9]{1,2})$/) {
+                    split($i, date, "/")
+                    if (date[2] > 12) {
+                        print "YYYY/DD/MM"
+                        found="true"
+                        exit
+                    }
+
+                    if (date[3] > 12) {
+                        print "YYYY/MM/DD"
+                        found="true"
+                        exit
+                    }
+
+                    # LAST LINE DEFAULT AMBIGUOUS DATES
+                    if (found == "false" && last_line=="true"){
+                        if (ambiguous_default_format=="USA") {
+                            print "YYYY/DD/MM"
+                        } else {
+                            print "YYYY/MM/DD"
+                        }
+                        found="true"
+                        exit
+                    }
+                }
+
+                # require OVERRIDE for YYYYMMDD to avoid possible issues
+                if (override == "true" && $i ~ /^(20[0-9]{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$/) {
+                    print "YYYYMMDD"
+                    found="true"
+                    exit
+                }
+            }
+        }
+    }' "$filename")
+
+    echo "$found_format"
+}
+
+# function normalize_dates() {
+#     local filename=$1
+#     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
+
+#     # Determine the date format for the file
+#     format_info=$(determine_date_format "$filename")
+#     format=$(echo "$format_info" | awk '{print $1}')
+#     month_day_positions=$(echo "$format_info" | awk '{print $2}')
+
+#     # Apply normalization logic based on the determined format
+#     if [ "$format" == "YYYY-MM-DD" ]; then
+#         # No need to normalize, already in the correct format
+#         cp "$filename" "$temp_file"
+#     else
+#         awk -F, -v format="$format" -v month_day_positions="$month_day_positions" 'BEGIN{OFS=","}
+#         {
+#             if (format == "MM/DD/YYYY") {
+#                 split($month_day_positions, positions, "/")
+#                 printf("%04d-%02d-%02d", $positions[1], $positions[2], $positions[3])
+#             } else if (format == "DD/MM/YYYY") {
+#                 split($month_day_positions, positions, "/")
+#                 printf("%04d-%02d-%02d", $positions[3], $positions[2], $positions[1])
+#             } else {
+#                 # Handle other formats as needed
+#                 print $0
+#             }
+#         }' "$filename" > "$temp_file"
+#     fi
+
+#     # Replace the original file with the normalized one
+#     mv "$temp_file" "$filename"
+# }
 
 # Normalize all dates in a CSV file to YYYY-MM-DD format.
 #
@@ -124,55 +280,69 @@ function normalize_dates() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
-    awk -F, 'BEGIN{OFS=","} {
+    format_info=$(determine_date_format "$filename")
+    # format=$(echo "$format_info" | awk '{print $1}')
+
+    format=$(echo "$format_info")
+    echo "$format"
+
+    awk -F, -v format="$format" 'BEGIN{OFS=","} {
         for(i=1; i<=NF; i++) {
-            # Check for YYYY-MM-DD format
-            if ($i ~ /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/) {
-                # Do nothing
-            }
-            # Check for MM/DD/YYYY format
-            else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
+
+            # print format
+            # # Check for YYYY-MM-DD format
+            # if ($i ~ /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/) {
+            #     # Do nothing
+            # }
+            if (format == "MM/DD/YYYY" && $i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
                 split($i, date, "/")
                 $i = sprintf("%04d-%02d-%02d", date[3], date[1], date[2])
-            }
-            # Check for YYYYMMDD format
-            else if ($i ~ /^[0-9]{8}$/) {
-                $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
-            }
-            # Check for DD/MM/YYYY format
-            else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
+            } else if (format == "DD/MM/YYYY" && $i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
                 split($i, date, "/")
                 $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
             }
-            # Check for DD-MM-YYYY format
-            else if ($i ~ /^[0-9]{1,2}-[0-9]{1,2}-[0-9]{4}$/) {
-                split($i, date, "-")
-                $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            }
-            # Check for DD.MM.YYYY format
-            else if ($i ~ /^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4}$/) {
-                split($i, date, ".")
-                $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            }
-            # Check for DDMMYYYY format
-            else if ($i ~ /^[0-9]{8}$/) {
-                $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
-            }
-            # Check for YYYY/MM/DD format
-            else if ($i ~ /^[0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2}$/) {
-                split($i, date, "/")
+            else if (format == "YYYYMMDD" && $i ~ /^[0-9]{8}$/) {
+                year = substr($i, 1, 4)
+                month = substr($i, 5, 2)
+                day = substr($i, 7, 2)
+                date[1] = year
+                date[2] = month
+                date[3] = day
                 $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
             }
-            # Check for YYYY.MM.DD format
-            else if ($i ~ /^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}$/) {
-                split($i, date, ".")
-                $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
-            }
+            # # Check for DD/MM/YYYY format
+            # else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
+            #     split($i, date, "/")
+            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
+            # }
+            # # Check for DD-MM-YYYY format
+            # else if ($i ~ /^[0-9]{1,2}-[0-9]{1,2}-[0-9]{4}$/) {
+            #     split($i, date, "-")
+            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
+            # }
+            # # Check for DD.MM.YYYY format
+            # else if ($i ~ /^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4}$/) {
+            #     split($i, date, ".")
+            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
+            # }
+            # # Check for DDMMYYYY format
+            # else if ($i ~ /^[0-9]{8}$/) {
+            #     $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
+            # }
+            # # Check for YYYY/MM/DD format
+            # else if ($i ~ /^[0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2}$/) {
+            #     split($i, date, "/")
+            #     $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
+            # }
+            # # Check for YYYY.MM.DD format
+            # else if ($i ~ /^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}$/) {
+            #     split($i, date, ".")
+            #     $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
+            # }
         }
         print
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 }
-
 
 # For bulk import, add a tag column to the CSV file.
 # This makes reviewing transactions that are categoized in Simplifi easier.

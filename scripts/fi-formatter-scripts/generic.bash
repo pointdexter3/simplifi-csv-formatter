@@ -17,25 +17,27 @@ filename="$output_directory/${original_filename%.*}-formatted.${original_filenam
 cp $original_filename $filename
 
 delete_header_and_message_lines $filename
-
 remove_noise $filename
-normalize_dates $filename
 
-if [[ ! -n "$original_date_column_num" ]]; then
-    echo "original_date_column_num must be provided"
-    exit 1
-fi
+# Insititution && Product Specific
+keep_columns $filename "$keep_columns"
 
 # Institutions sometimes use positive numbers for credit transactions
 if [[ -n "$invert_numbers" ]]; then
     invert_numbers $filename
 fi
 
-# filter_by_date $filename $from_date $original_date_column_num
-sort_by_date $filename $original_date_column_num
+if [[ ! -n "$original_date_column_num" ]]; then
+    echo "original_date_column_num must be provided"
+    exit 1
+fi
 
-# Insititution && Product Specific
-keep_columns $filename "$keep_columns"
+# As keep_columns() removed all but Payee, Amount, and Date
+new_date_column_position=$(get_new_column_position "$original_date_column_num" "$keep_columns")
+normalize_dates $filename
+# filter_by_date $filename $from_date $new_date_column_position
+sort_by_date $filename $new_date_column_position
+
 
 # # Simplifi Specific
 simplifi_rearrange_columns $filename

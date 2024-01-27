@@ -95,6 +95,7 @@ process_fi_csv_file "pc-financial-mastercard.csv" "generic.bash"\
 process_fi_csv_file "scotiabank-visa.csv" "generic.bash"\
   "$from_date" "0" "1,2,3" "" 1
 
+
 # process_fi_csv_file "scotiabank-visa.csv" "" "$from_date"
 # process_fi_csv_file "td-visa.csv" "" "$from_date"
 # process_fi_csv_file "tangerine-chequing.csv" "" "$from_date"
