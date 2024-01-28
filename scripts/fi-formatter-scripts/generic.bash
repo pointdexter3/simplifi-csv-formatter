@@ -11,6 +11,7 @@ tag_from_filename=$4
 keep_columns=$5
 invert_numbers=$6
 original_date_column_num=$7
+combine_debit_credit_columns=$8
 filename="$output_directory/${original_filename%.*}-formatted.${original_filename##*.}"
 
 # copy file
@@ -18,6 +19,10 @@ cp $original_filename $filename
 
 delete_header_and_message_lines $filename
 remove_noise $filename
+
+if [[ -n "$combine_debit_credit_columns" ]]; then
+    combine_debit_credit_columns $filename $combine_debit_credit_columns
+fi
 
 # Insititution && Product Specific
 keep_columns $filename "$keep_columns"
@@ -35,11 +40,10 @@ fi
 # As keep_columns() removed all but Payee, Amount, and Date
 new_date_column_position=$(get_new_column_position "$original_date_column_num" "$keep_columns")
 normalize_dates $filename
-# filter_by_date $filename $from_date $new_date_column_position
+filter_by_date $filename $from_date $new_date_column_position
 sort_by_date $filename $new_date_column_position
 
-
-# # Simplifi Specific
+# Simplifi Specific
 simplifi_rearrange_columns $filename
 simplifi_add_tag_column $filename $tag_from_filename # update 0 to 1 to add tag column ('from bmo-chequing')
 simplifi_date $filename

@@ -1,5 +1,33 @@
 #!/bin/bash
 
+function combine_debit_credit_columns() {
+    local filename=$1
+    local debit_credit_columns=$2
+    local temp_file=$(mktemp "$filename.XXXXXXXXXX")
+
+    awk -v debit_credit="$debit_credit_columns" -F, -v OFS="," '{
+        split(debit_credit, columns, /,/);
+        gsub(/[$,]/, "", $(columns[1]));
+        gsub(/[$,]/, "", $(columns[2]));
+
+        # Check if the value in the second column is a credit
+        if ($(columns[2]) ~ /^[-+]?[0-9]+\.[0-9]+$/) {
+
+            # If its not negative, make it negative
+            if ($(columns[2]) >= 0) {
+                $(columns[2]) = -$(columns[2]);
+            }
+
+            # Copy credit into debit column
+            $(columns[1]) = $(columns[2]);
+        }
+
+        $(columns[2]) = "";
+        print $0;
+    }' "$filename" > "$temp_file" && mv "$temp_file" "$filename"
+}
+
+
 # get the new position of a column after keep_columns() is executed.
 # assume the column exists in the list of columns_to_keep
 function get_new_column_position() {
@@ -208,11 +236,7 @@ function determine_date_format() {
 
                     # LAST LINE DEFAULT AMBIGUOUS DATES
                     if (found == "false" && last_line=="true"){
-                        if (ambiguous_default_format=="USA") {
-                            print "YYYY/DD/MM"
-                        } else {
-                            print "YYYY/MM/DD"
-                        }
+                        print "YYYY/MM/DD"
                         found="true"
                         exit
                     }
@@ -231,77 +255,31 @@ function determine_date_format() {
     echo "$found_format"
 }
 
-# function normalize_dates() {
-#     local filename=$1
-#     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
-
-#     # Determine the date format for the file
-#     format_info=$(determine_date_format "$filename")
-#     format=$(echo "$format_info" | awk '{print $1}')
-#     month_day_positions=$(echo "$format_info" | awk '{print $2}')
-
-#     # Apply normalization logic based on the determined format
-#     if [ "$format" == "YYYY-MM-DD" ]; then
-#         # No need to normalize, already in the correct format
-#         cp "$filename" "$temp_file"
-#     else
-#         awk -F, -v format="$format" -v month_day_positions="$month_day_positions" 'BEGIN{OFS=","}
-#         {
-#             if (format == "MM/DD/YYYY") {
-#                 split($month_day_positions, positions, "/")
-#                 printf("%04d-%02d-%02d", $positions[1], $positions[2], $positions[3])
-#             } else if (format == "DD/MM/YYYY") {
-#                 split($month_day_positions, positions, "/")
-#                 printf("%04d-%02d-%02d", $positions[3], $positions[2], $positions[1])
-#             } else {
-#                 # Handle other formats as needed
-#                 print $0
-#             }
-#         }' "$filename" > "$temp_file"
-#     fi
-
-#     # Replace the original file with the normalized one
-#     mv "$temp_file" "$filename"
-# }
-
 # Normalize all dates in a CSV file to YYYY-MM-DD format.
 #
-# The following date formats are supported:
-#   YYYY-MM-DD (no change)
-#   MM/DD/YYYY
-#   YYYYMMDD
-#   DD/MM/YYYY
-#   DD-MM-YYYY
-#   DD.MM.YYYY
-#   DDMMYYYY
+# The following date formats are supported (where "/" can be "/", ".", or "-"):
 #   YYYY/MM/DD
-#   YYYY.MM.DD
+#   MM/DD/YYYY and DD/MM/YYYY
+#   YYYYMMDD
 function normalize_dates() {
     local filename=$1
     local temp_file=$(mktemp "$filename.XXXXXXXXXX")
 
-    format_info=$(determine_date_format "$filename")
-    # format=$(echo "$format_info" | awk '{print $1}')
-
-    format=$(echo "$format_info")
-    echo "$format"
+    format=$(determine_date_format "$filename")
+    # echo "$format" #DEBUG
 
     awk -F, -v format="$format" 'BEGIN{OFS=","} {
         for(i=1; i<=NF; i++) {
-
-            # print format
-            # # Check for YYYY-MM-DD format
-            # if ($i ~ /^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/) {
-            #     # Do nothing
-            # }
-            if (format == "MM/DD/YYYY" && $i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
-                split($i, date, "/")
+            #######################################################################
+            #### FORMATS BELOW USING "/" IN THE FORMAT MAY BE USING "/" "." "-"
+            #######################################################################
+            if (format == "MM/DD/YYYY" && $i ~ /^([0-9]{1,2})[\/.-]+([0-9]{1,2})[\/.-]+([0-9]{4})$/) {
+                split($i, date, /[\/.-]/)
                 $i = sprintf("%04d-%02d-%02d", date[3], date[1], date[2])
-            } else if (format == "DD/MM/YYYY" && $i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
-                split($i, date, "/")
+            } else if (format == "DD/MM/YYYY" && $i ~ /^([0-9]{1,2})[\/.-]+([0-9]{1,2})[\/.-]+([0-9]{4})$/) {
+                split($i, date, /[\/.-]/)
                 $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            }
-            else if (format == "YYYYMMDD" && $i ~ /^[0-9]{8}$/) {
+            } else if (format == "YYYYMMDD" && $i ~ /^(20[0-9]{2})(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$/) {
                 year = substr($i, 1, 4)
                 month = substr($i, 5, 2)
                 day = substr($i, 7, 2)
@@ -309,36 +287,10 @@ function normalize_dates() {
                 date[2] = month
                 date[3] = day
                 $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
+            } else if (format == "YYYY/MM/DD" && $i ~ /^([0-9]{4})[\/.-]+([0-9]{1,2})[\/.-]+([0-9]{1,2})$/) {
+                split($i, date, /[\/.-]/)
+                $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
             }
-            # # Check for DD/MM/YYYY format
-            # else if ($i ~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
-            #     split($i, date, "/")
-            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            # }
-            # # Check for DD-MM-YYYY format
-            # else if ($i ~ /^[0-9]{1,2}-[0-9]{1,2}-[0-9]{4}$/) {
-            #     split($i, date, "-")
-            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            # }
-            # # Check for DD.MM.YYYY format
-            # else if ($i ~ /^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4}$/) {
-            #     split($i, date, ".")
-            #     $i = sprintf("%04d-%02d-%02d", date[3], date[2], date[1])
-            # }
-            # # Check for DDMMYYYY format
-            # else if ($i ~ /^[0-9]{8}$/) {
-            #     $i = sprintf("%04d-%02d-%02d", substr($i, 1, 4), substr($i, 5, 2), substr($i, 7, 2))
-            # }
-            # # Check for YYYY/MM/DD format
-            # else if ($i ~ /^[0-9]{4}\/[0-9]{1,2}\/[0-9]{1,2}$/) {
-            #     split($i, date, "/")
-            #     $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
-            # }
-            # # Check for YYYY.MM.DD format
-            # else if ($i ~ /^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}$/) {
-            #     split($i, date, ".")
-            #     $i = sprintf("%04d-%02d-%02d", date[1], date[2], date[3])
-            # }
         }
         print
     }' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
@@ -373,7 +325,7 @@ function simplifi_rearrange_columns() {
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) {
                     date_position = i
-                } else if ($i ~ /^[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?$/) {
+                } else if ($i ~ /^[-+]?[0-9]*\.[0-9]+$/) {
                     number_position = i
                 } else {
                     string_position = i
