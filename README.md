@@ -42,15 +42,17 @@ I will update the following table over time.
 - Select the CSV file option and save to the `/csv-raw` directory
 - Rename the `.csv` files to one of the following supported filenames (or simply overrite one of the existing empty files)
 
-> bmo-chequing.csv
-> bmo-mastercard.csv
-> pc-financial-mastercard.csv
-> scotiabank-visa.csv
-> tangerine-chequing.csv
-> tangerine-savings.csv
-> rbc-visa-csv-export.csv
-> rbc-visa-manual-copy.csv
-> td-visa.csv
+|CSV Supported File Names    |
+|----------------------------|
+|bmo-chequing.csv            |
+|bmo-mastercard.csv          |
+|pc-financial-mastercard.csv |
+|scotiabank-visa.csv         |
+|tangerine-chequing.csv      |
+|tangerine-savings.csv       |
+|rbc-visa-csv-export.csv     |
+|rbc-visa-manual-copy.csv    |
+|td-visa.csv                 |
 
 ## Run terminal command
 
