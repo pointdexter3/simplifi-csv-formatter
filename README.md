@@ -39,19 +39,26 @@ I will update the following table over time.
 ## Download Transactions
 
 - Download transactions from your financial institutions desktop website.
-- Select the CSV file option and save to the `/csv-raw` directory, overwrite the existing file(s) for your corresponding financial institution as the name is important (I can update support for other FI's when I know the format of their CSV export).
+- Select the CSV file option and save to the `/csv-raw` directory
+- Rename the `.csv` files to one of the following supported filenames (or simply overrite one of the existing empty files)
 
+> bmo-chequing.csv
+> bmo-mastercard.csv
+> pc-financial-mastercard.csv
+> scotiabank-visa.csv
+> tangerine-chequing.csv
+> tangerine-savings.csv
+> rbc-visa-csv-export.csv
+> rbc-visa-manual-copy.csv
+> td-visa.csv
 
 ## Run terminal command
 
-- Open terminal app on Mac and navigate to the `csv-extractor/scripts/` directory (Alternatively Right click the `/scripts` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
-- Copy/paste the following command into the terminal and hit enter `./format-all-financial-institutions.bash "2023-12-20"` (Where the date in quotes is the oldest transaction date you wish to import).
+- Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
+- Copy/paste the following command into the terminal and hit enter `./format-all-financial-institutions.bash "2023-12-20"` (The date in quotes is the oldest transaction date you wish to import. The date may be omitted).
 
-
-## Run terminal command
+## Validate / Import into Simplifi
 
 - The formatted files will appear in the `/generated` directory.
-- Validate using your text editor of choice.
-- Upload the files to Simplifi using their import option (take care to select the correct account in their dropdown when uploading.
-
-
+- Validate that the format looks correct in the `.csv` files before importing into Simplifi.
+- Upload the files to Simplifi using their import option ** (take care to select the correct account in their dropdown when uploading) **
