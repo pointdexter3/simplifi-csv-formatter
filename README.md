@@ -57,7 +57,8 @@ I will update the following table over time.
 ## Run terminal command
 
 - Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
-- Copy/paste the following command into the terminal and hit enter `./format-all-financial-institutions.bash "2023-12-20"` (The date in quotes is the oldest transaction date you wish to import. The date may be omitted).
+- Copy/paste the following command into the terminal `./format-all-financial-institutions.bash "2023-12-20"` (The date in quotes is the oldest transaction date you wish to import. If desired the date may be omitted).
+- Hit Enter to run the formatter
 
 ## Validate / Import into Simplifi
 
