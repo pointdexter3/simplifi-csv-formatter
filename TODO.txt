@@ -4,8 +4,6 @@
 
 ## Minor
 
-- Update folder structure
-- Organize scripts
 - Update README after next release
 
 
