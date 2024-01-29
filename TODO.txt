@@ -4,7 +4,7 @@
 
 ## Minor
 
-- Update README after next release
+
 
 
 ## Major
