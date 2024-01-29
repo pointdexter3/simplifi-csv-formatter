@@ -1,0 +1,10 @@
+
+** Financial Institutions sometimes export CSV's for individual statement months **
+
+Download and save any CSV's you would like combined in this folder (naming not important)
+
+In addition to searching for your-filename.csv, The fi-formatter script will also search for a directory of the same name (not including the .csv extension) 
+/your-filename
+
+If no files are found to combine in the /your-filename directory the your-filename.csv file will be used.
+

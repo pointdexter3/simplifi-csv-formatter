@@ -2,6 +2,7 @@
 
 # import common functions (relative to this script)
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" && . "$script_dir/fi-formatter-common.bash"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" && . "$script_dir/fi-formatter-simplifi.bash"
 
 # keep the original file, create a new file for the formatted data, fill the new file with the data
 original_filename=$1
