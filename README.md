@@ -1,4 +1,4 @@
-# Simplifi CSV Formatter for Canadians
+# Simplifi CSV Formatter for Canadians 🇨🇦
 
 
 
