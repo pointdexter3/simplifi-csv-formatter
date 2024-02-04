@@ -26,7 +26,7 @@ I will update the following table over time.
 |BMO Mastercard       |3 Months                    |
 |BMO Chequing         |2 Months                    |
 |PC Mastercard        |1 Year                      |
-|RBC Visa             |1 Month! (*ALL TRANSACTIONS COPY/PASTE*)|
+|RBC Visa             |1 Month! (*ALL TRANSACTIONS COPY/PASTE into numbers and format the date to yyyy-mm-dd*)|
 |Scotiabank Visa      |1 Year (All transactions?)  |
 |TD Visa              |6 Months (Individual statement CSV files)|
 |Tangerine Chequing   |5 Years                     |
