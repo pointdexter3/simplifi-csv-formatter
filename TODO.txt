@@ -1,4 +1,7 @@
 
+# Bugs
+- cannot handle transactions that are 0 (not sure if a transaction being zero is valid, tangerine specific)
+
 # Future Enhancements
 
 
