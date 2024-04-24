@@ -2,6 +2,15 @@
 # Bugs
 - cannot handle transactions that are 0 (not sure if a transaction being zero is valid, tangerine specific)
 
+RBC is having issues (Jan 28 - Mar 28)
+Before
+2024-02-12,"MCDONALD'S #40346, TORONTO",$21.22,,,,
+2024-02-11,"WAL-MART STORE#1150, TORONTO",$31.92,,,,
+
+After (issue)
+"02/12/2024","MCDONALDS 40346","TORONTO-21.22",""
+"02/11/2024","WAL-MART STORE1150 TORONTO","-31.92",""
+
 # Future Enhancements
 
 
