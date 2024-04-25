@@ -65,8 +65,8 @@ function remove_noise() {
         -e 's/ +/ /g' \
         "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 
-    # remove commas between double quotes (and single quotes)
-    awk -F'["'\'']' -v OFS='"' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
+    # remove commas between double quotes
+    awk -F'"' -v OFS='"' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
 
     # remove single quotes, double quotes, remove leading and trailing spaces in each column. remove spaces at end of line
     sed -E -e 's/["'\'']//g' -e 's/\, +/,/g' -e 's/ +\,/,/g' -e 's/ +$//g' "$filename" >"$temp_file" && mv "$temp_file" "$filename"
