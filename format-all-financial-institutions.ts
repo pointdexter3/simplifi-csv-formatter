@@ -50,14 +50,11 @@ function qfxToXmlConverter(contents: string): string {
 
   const regexOpeningTag = /</g;
 
-
   let xmlContents = contents
     // add a new line every opening tag (for files which don't have new lines)
     .replaceAll("<", "\n<")
     // remove duplicate new lines (if newlines aleady existed)
-    .replaceAll("\n\n", "\n")
-    ;
-
+    .replaceAll("\n\n", "\n");
   // console.log("xmlContents: ", xmlContents);
 
   const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
@@ -93,11 +90,9 @@ function processFile(filePath: string): void {
 
   // console.log(content)
 
-
   content = qfxToXmlConverter(content);
 
   // console.log(content)
-
 
   const parser = new XMLParser();
   const jsonData = parser.parse(content) as OfxSchema;
@@ -110,7 +105,7 @@ function processFile(filePath: string): void {
     return {
       Date: convertOfxDateTimeToSimplifiDate(transItem.DTPOSTED),
       Payee: transItem.NAME,
-      Amount: transItem.TRNAMT,
+      Amount: (+transItem.TRNAMT).toFixed(2),
     };
   });
   // console.log(JSON.stringify(simplifiTransactions));
@@ -129,7 +124,6 @@ function extractOfxTransactions(
     return ofxJsonData.OFX[OfxCreditAccountTag].CCSTMTTRNRS.CCSTMTRS
       .BANKTRANLIST.STMTTRN;
   } else {
-    
   }
 
   return [];
@@ -171,7 +165,11 @@ function sortTransactionsByDateFn(
   a: SimplifiTransactionsInterface,
   b: SimplifiTransactionsInterface
 ): number {
-  return a.Date === b.Date ? 0 : a.Date < b.Date ? -1 : 1;
+  if (a.Date === b.Date) {
+    return 0;
+  } else {
+    return a.Date < b.Date ? -1 : 1;
+  }
 }
 
 function convertOfxDateTimeToSimplifiDate(ofxDate: string): string {

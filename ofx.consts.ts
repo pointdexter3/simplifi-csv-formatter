@@ -81,5 +81,5 @@ export interface OfxSchema {
 export interface SimplifiTransactionsInterface {
   Date: string;
   Payee: string;
-  Amount: number;
+  Amount: string;
 }
