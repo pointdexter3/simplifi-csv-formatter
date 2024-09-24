@@ -8,7 +8,7 @@ import {
   OfxDebitAccountTag,
   OfxSchema,
   OfxTransactionInterface,
-  simplifiTransactionsInterface,
+  SimplifiTransactionsInterface,
 } from "./ofx.consts.js";
 
 console.log(
@@ -58,14 +58,14 @@ function qfxToXmlConverter(contents: string): string {
     .replaceAll("\n\n", "\n")
     ;
 
-  console.log("xmlContents: ", xmlContents);
+  // console.log("xmlContents: ", xmlContents);
 
   const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
   const lines = xmlContents.split("\n");
 
   xmlContents = lines
     .map((line) => {
-      // console.log("randy line: ", line);
+      // console.log("xmlContents line: ", line);
       const match = regexFindTagAndValueWithMissingClosingTag.exec(line);
       if (match) {
         const key = match[1].trim(); // The key (the entire tag)
@@ -91,18 +91,18 @@ function processFile(filePath: string): void {
   const ofxAccountType = extractAccountType(content);
   content = qfxToXmlConverterPreMassage(content, ofxAccountType);
 
-  console.log(content)
+  // console.log(content)
 
 
   content = qfxToXmlConverter(content);
 
-  console.log(content)
+  // console.log(content)
 
 
   const parser = new XMLParser();
   const jsonData = parser.parse(content) as OfxSchema;
 
-  console.log(jsonData)
+  // console.log(jsonData)
 
   const transactionsList = extractOfxTransactions(jsonData, ofxAccountType);
 
@@ -122,7 +122,7 @@ function extractOfxTransactions(
   ofxAccountType: OfxAccountTypeEnum
 ): OfxTransactionInterface[] {
   if (ofxAccountType === OfxAccountTypeEnum.DEBIT) {
-    console.log("meadow: ", ofxJsonData.OFX)
+    // console.log("extractOfxTransactions DEBIT: ", ofxJsonData.OFX)
     return ofxJsonData.OFX[OfxDebitAccountTag].STMTTRNRS.STMTRS.BANKTRANLIST
       .STMTTRN;
   } else if (ofxAccountType === OfxAccountTypeEnum.CREDIT) {
@@ -133,10 +133,6 @@ function extractOfxTransactions(
   }
 
   return [];
-  // const transactionsList =
-  // jsonData.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.BANKTRANLIST.STMTTRN;
-
-  // jsonData.OFX.BANKMSGSRSV1.STMTTRNRS.
 }
 
 function extractAccountType(ofxContent: string): OfxAccountTypeEnum {
@@ -152,7 +148,7 @@ function extractAccountType(ofxContent: string): OfxAccountTypeEnum {
 }
 
 function writeTransactionsToCsv(
-  simplifiTransactions: simplifiTransactionsInterface[],
+  simplifiTransactions: SimplifiTransactionsInterface[],
   directory: string,
   fileNameWithoutExt: string
 ): void {
@@ -168,12 +164,12 @@ function writeTransactionsToCsv(
     `"Date","Payee","Amount","Tags"\n` // SIMPLIFI CSV HEADER
   );
   writeFileSync(directory + "/" + fileNameWithoutExt + ".csv", csvContent);
-  console.log("generated: " + fileNameWithoutExt + ".csv");
+  // console.log("generated: " + fileNameWithoutExt + ".csv");
 }
 
 function sortTransactionsByDateFn(
-  a: simplifiTransactionsInterface,
-  b: simplifiTransactionsInterface
+  a: SimplifiTransactionsInterface,
+  b: SimplifiTransactionsInterface
 ): number {
   return a.Date === b.Date ? 0 : a.Date < b.Date ? -1 : 1;
 }

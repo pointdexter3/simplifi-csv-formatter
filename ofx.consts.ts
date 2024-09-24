@@ -78,7 +78,7 @@ export interface OfxSchema {
   };
 }
 
-export interface simplifiTransactionsInterface {
+export interface SimplifiTransactionsInterface {
   Date: string;
   Payee: string;
   Amount: number;
