@@ -3,11 +3,8 @@ import { readFileSync, statSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
 import dayjs from "dayjs";
 import {
-  OfxAccountTypeEnum,
-  OfxCreditAccountTag,
-  OfxDebitAccountTag,
-  OfxSchema,
   OfxTransactionInterface,
+  OfxTransactionItemInterface,
   SimplifiTransactionsInterface,
 } from "./ofx.consts.js";
 
@@ -34,47 +31,10 @@ function readFilesInDirectory(dirPath: string): void {
       processFile(itemPath);
     }
   });
-}
 
-function qfxToXmlConverterPreMassage(
-  contents: string,
-  ofxAccountType: OfxAccountTypeEnum
-): string {
-  // ofxAccountType
-  return contents;
-}
-
-function qfxToXmlConverter(contents: string): string {
-  // remove OFX header meta data
-  contents = "<OFX>" + contents.split("<OFX>")[1];
-
-  const regexOpeningTag = /</g;
-
-  let xmlContents = contents
-    // add a new line every opening tag (for files which don't have new lines)
-    .replaceAll("<", "\n<")
-    // remove duplicate new lines (if newlines aleady existed)
-    .replaceAll("\n\n", "\n");
-  // console.log("xmlContents: ", xmlContents);
-
-  const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
-  const lines = xmlContents.split("\n");
-
-  xmlContents = lines
-    .map((line) => {
-      // console.log("xmlContents line: ", line);
-      const match = regexFindTagAndValueWithMissingClosingTag.exec(line);
-      if (match) {
-        const key = match[1].trim(); // The key (the entire tag)
-        const value = match[2].trim(); // The value after the key
-        return `<${key}>${value}</${key}>`;
-      } else {
-        return line;
-      }
-    })
-    .join("");
-
-  return xmlContents;
+  if (!items.length) {
+    console.log("No .qfx files found in:  ", absolutePath);
+  }
 }
 
 function processFile(filePath: string): void {
@@ -83,23 +43,9 @@ function processFile(filePath: string): void {
 
   // console.log("fileNameWithoutExt: " + fileNameWithoutExt);
   // console.log("directory: " + directory);
-  let content = readFileSync(filePath, "utf-8");
 
-  const ofxAccountType = extractAccountType(content);
-  content = qfxToXmlConverterPreMassage(content, ofxAccountType);
-
-  // console.log(content)
-
-  content = qfxToXmlConverter(content);
-
-  // console.log(content)
-
-  const parser = new XMLParser();
-  const jsonData = parser.parse(content) as OfxSchema;
-
-  // console.log(jsonData)
-
-  const transactionsList = extractOfxTransactions(jsonData, ofxAccountType);
+  const content = readFileSync(filePath, "utf-8");
+  const transactionsList = qfxExtractTransactions(content);
 
   const simplifiTransactions = transactionsList.map((transItem) => {
     return {
@@ -108,37 +54,49 @@ function processFile(filePath: string): void {
       Amount: (+transItem.TRNAMT).toFixed(2),
     };
   });
-  // console.log(JSON.stringify(simplifiTransactions));
   writeTransactionsToCsv(simplifiTransactions, directory, fileNameWithoutExt);
 }
 
-function extractOfxTransactions(
-  ofxJsonData: OfxSchema,
-  ofxAccountType: OfxAccountTypeEnum
-): OfxTransactionInterface[] {
-  if (ofxAccountType === OfxAccountTypeEnum.DEBIT) {
-    // console.log("extractOfxTransactions DEBIT: ", ofxJsonData.OFX)
-    return ofxJsonData.OFX[OfxDebitAccountTag].STMTTRNRS.STMTRS.BANKTRANLIST
-      .STMTTRN;
-  } else if (ofxAccountType === OfxAccountTypeEnum.CREDIT) {
-    return ofxJsonData.OFX[OfxCreditAccountTag].CCSTMTTRNRS.CCSTMTRS
-      .BANKTRANLIST.STMTTRN;
-  } else {
-  }
+function qfxExtractTransactions(contents: string): OfxTransactionItemInterface[] {
+  const transactionTagRegex = /<\/?(BANKTRANLIST)>/;
+  let transactionsTagContents = contents.split(transactionTagRegex)[2];
 
-  return [];
-}
+  // remove <DTSTART>value and <DTEND>value without closing tags (messes up parser)
+  transactionsTagContents = transactionsTagContents.replace(
+    /.*?(<STMTTRN>.*)/s,
+    "$1"
+  );
 
-function extractAccountType(ofxContent: string): OfxAccountTypeEnum {
-  if (ofxContent.includes(OfxCreditAccountTag)) {
-    return OfxAccountTypeEnum.CREDIT;
-  }
+  // split tag pairs using new line
+  const contentsXmlFormatMinusClosingTag = transactionsTagContents.replaceAll(
+    "<",
+    "\n<"
+  );
+  // create array to iterate through tag pairs
+  const lines = contentsXmlFormatMinusClosingTag.split("\n");
 
-  if (ofxContent.includes(OfxDebitAccountTag)) {
-    return OfxAccountTypeEnum.DEBIT;
-  }
+  // add closing tags to tag/value pairs
+  const contentsXmlFormat = lines
+    .map((line) => {
+      const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
+      const match = regexFindTagAndValueWithMissingClosingTag.exec(line);
+      if (match) {
+        const tagName = match[1].trim();
+        const value = match[2].trim();
+        // add closing tag
+        return `<${tagName}>${value}</${tagName}>`;
+      } else {
+        return line;
+      }
+    })
+    .join("");
 
-  throw "extractAccountType unknown tag";
+  const parser = new XMLParser();
+  const jsonData = parser.parse(
+    "<BANKTRANLIST>" + contentsXmlFormat + "</BANKTRANLIST>" // add root tag
+  ) as OfxTransactionInterface;
+
+  return jsonData.BANKTRANLIST.STMTTRN;
 }
 
 function writeTransactionsToCsv(
@@ -157,8 +115,14 @@ function writeTransactionsToCsv(
     },
     `"Date","Payee","Amount","Tags"\n` // SIMPLIFI CSV HEADER
   );
-  writeFileSync(directory + "/" + fileNameWithoutExt + ".csv", csvContent);
-  // console.log("generated: " + fileNameWithoutExt + ".csv");
+  writeFileSync(
+    directory +
+      "/../generated_simplifi_csv_files/" +
+      fileNameWithoutExt +
+      ".csv",
+    csvContent
+  );
+  console.log("generated: " + fileNameWithoutExt + ".csv");
 }
 
 function sortTransactionsByDateFn(
@@ -177,7 +141,7 @@ function convertOfxDateTimeToSimplifiDate(ofxDate: string): string {
 }
 
 function main(): void {
-  const rawFileDirectoryPath = "./raw-various-formats";
+  const rawFileDirectoryPath = "./original_ofx_files";
   readFilesInDirectory(rawFileDirectoryPath);
 }
 

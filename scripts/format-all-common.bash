@@ -44,7 +44,7 @@ function print_intro() {
   echo "------------------------ Simplifi CSV Formatter -------------------------------"
   echo "-------------------------------------------------------------------------------"
   echo "----- This script will format all CSV files in the /csv-raw folder ------------"
-  echo "----- Formatted files for Simplifi import are placed in /generated folder -----"
+  echo "----- Formatted files for Simplifi import are placed in /generated-old folder -----"
   echo "-------------------------------------------------------------------------------"
   echo
   echo

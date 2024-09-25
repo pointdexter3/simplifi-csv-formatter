@@ -40,7 +40,7 @@ function process_fi_csv_file {
     if check_file_exists "$csv_filename"; then
       if check_file_exists_and_not_empty "$csv_filename"; then
         echo "File FOUND:       '$csv_filename'"
-        "$root_directory/scripts/fi-formatter-scripts/$script_filename" "$csv_filename" "$root_directory/generated" \
+        "$root_directory/scripts/fi-formatter-scripts/$script_filename" "$csv_filename" "$root_directory/generated-old" \
           "$from_date" "$tag_from_filename" "$keep_columns" "$invert_numbers" "$original_date_column_num" \
           "$separate_debit_credit_columns"
       else
