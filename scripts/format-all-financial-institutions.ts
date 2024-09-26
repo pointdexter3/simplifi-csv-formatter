@@ -57,7 +57,9 @@ function processFile(filePath: string): void {
   writeTransactionsToCsv(simplifiTransactions, directory, fileNameWithoutExt);
 }
 
-function qfxExtractTransactions(contents: string): OfxTransactionItemInterface[] {
+function qfxExtractTransactions(
+  contents: string
+): OfxTransactionItemInterface[] {
   const transactionTagRegex = /<\/?(BANKTRANLIST)>/;
   let transactionsTagContents = contents.split(transactionTagRegex)[2];
 
@@ -141,6 +143,13 @@ function convertOfxDateTimeToSimplifiDate(ofxDate: string): string {
 }
 
 function main(): void {
+  const filterStart = process.argv.slice(2, 3);
+  const filterEnd = process.argv.slice(3, 4);
+
+  if(!!filterStart.length || !!filterEnd.length){
+    console.log("DATE FILTERS: ", "\nstart: " + filterStart, "\nend: " + filterEnd + "\n")
+  }
+
   const rawFileDirectoryPath = "./original_ofx_files";
   readFilesInDirectory(rawFileDirectoryPath);
 }
