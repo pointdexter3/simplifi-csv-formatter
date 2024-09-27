@@ -1,8 +1,5 @@
 
 # Tasks
-- generate csv's using various financial institutions qfx files. 
-- validate the outputed csvs against the original bash scripts csv output
-- address gaps in the new implementation
 - import newly exported into simplifi
 
 
@@ -17,7 +14,9 @@
 
 
 # Future Enhancements
-
+- add filtering of transaction start/end date
+- address gaps in the new implementation
+    - support multiple combined files
 
 ## Minor
 
