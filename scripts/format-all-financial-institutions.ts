@@ -14,66 +14,141 @@ console.log(
     "-------------------------------------------------------------------------------"
 );
 
+// function readFilesInChildDirectory(
+//   dirPath: string
+// ): SimplifiTransactionsInterface[] {
+//   const absolutePath = path.resolve(dirPath);
+
+//   // Read all items in the directory
+//   const file = readdirSync(absolutePath);
+//   let simplifiTransactions: SimplifiTransactionsInterface[] = [];
+
+//   file.forEach((item) => {
+//     const filePath = path.join(absolutePath, item);
+//     const stats = statSync(filePath);
+
+//     if (
+//       stats.isFile() &&
+//       (filePath.split(".").pop()?.toLowerCase() === "qfx" ||
+//         filePath.split(".").pop()?.toLowerCase() === "ofx")
+//     ) {
+//       const content = readFileSync(filePath, "utf-8");
+//       const transactionsList = qfxExtractTransactions(content);
+
+//       simplifiTransactions = [
+//         ...simplifiTransactions,
+//         ...transactionsList.map((transItem) => {
+//           return {
+//             Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
+//             Payee: `${transItem.NAME} ${transItem.MEMO ?? ""}`.replace(
+//               / +/g,
+//               " "
+//             ),
+//             Amount: (+transItem.TRNAMT).toFixed(2),
+//           };
+//         }),
+//       ];
+//     }
+//   });
+
+//   if (!file.length) {
+//     console.log("No .qfx files found in nested directory:  ", absolutePath);
+//   }
+
+//   return simplifiTransactions;
+// }
+
+function readTransactionsFromFile(
+  childDirPath: string,
+  childFile: string
+): SimplifiTransactionsInterface[] {
+  const childFilePath = path.join(childDirPath, childFile);
+  const isFile = statSync(childFilePath).isFile();
+
+  if (
+    isFile &&
+    (childFilePath.split(".").pop()?.toLowerCase() === "qfx" ||
+      childFilePath.split(".").pop()?.toLowerCase() === "ofx")
+  ) {
+    const content = readFileSync(childFilePath, "utf-8");
+    const transactionsList = qfxExtractTransactions(content);
+
+    return [
+      ...transactionsList.map((transItem) => {
+        return {
+          Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
+          Payee: `${transItem.NAME} ${transItem.MEMO ?? ""}`.replace(
+            / +/g,
+            " "
+          ),
+          Amount: (+transItem.TRNAMT).toFixed(2),
+        };
+      }),
+    ];
+  }
+
+  return [];
+}
+
+function readTransactionsFromDirectory(
+  filePath: string
+): SimplifiTransactionsInterface[] {
+  const childDirPath = filePath;
+
+  const childFileNameList = readdirSync(childDirPath);
+  let childSimplifiTransactions: SimplifiTransactionsInterface[] = [];
+
+  childFileNameList.forEach((childFileName) => {
+    childSimplifiTransactions = [
+      ...childSimplifiTransactions,
+      ...readTransactionsFromFile(childDirPath, childFileName),
+    ];
+  });
+
+  if (!childFileNameList.length || childSimplifiTransactions.length === 0) {
+    console.log(
+      "OFX files are empty or do not exist in nested directory:  ",
+      childDirPath
+    );
+  }
+
+  return childSimplifiTransactions;
+}
+
 function readFilesInDirectory(dirPath: string): void {
   const absolutePath = path.resolve(dirPath);
 
   // Read all items in the directory
-  const items = readdirSync(absolutePath);
+  const fileNameList = readdirSync(absolutePath);
 
-  items.forEach((item) => {
-    const itemPath = path.join(absolutePath, item);
-    const stats = statSync(itemPath);
+  fileNameList.forEach((fileName) => {
+    const filePath = path.join(absolutePath, fileName);
+    const isDirectory = statSync(filePath).isDirectory();
 
-    if (stats.isDirectory()) {
-      // If it's a directory, recursively read files in that directory
-      // readFilesInDirectory(itemPath); // uncomment if nested directory support should be added
-    } else if (
-      stats.isFile() &&
-      (itemPath.split(".").pop()?.toLowerCase() === "qfx" ||
-        itemPath.split(".").pop()?.toLowerCase() === "ofx")
-    ) {
-      processFile(itemPath);
+    let simplifiTransactions: SimplifiTransactionsInterface[] | undefined;
+
+    // Read all transactions from file or combined directory
+    simplifiTransactions = isDirectory
+      ? readTransactionsFromDirectory(filePath)
+      : readTransactionsFromFile(absolutePath, fileName);
+
+    if (simplifiTransactions.length) {
+      simplifiTransactions.sort(sortTransactionsByIsoDateFn);
+
+      simplifiTransactions = simplifiTransactions.map((transItem) => {
+        return {
+          ...transItem,
+          Date: convertIsoDateToSimplifiDate(transItem.Date),
+        };
+      });
+
+      writeTransactionsToCsv(simplifiTransactions, filePath);
     }
   });
 
-  if (!items.length) {
+  if (!fileNameList.length) {
     console.log("No .qfx files found in:  ", absolutePath);
   }
-}
-
-function processFile(filePath: string): void {
-  // const fileNameWithoutExt = path.basename(filePath, ".qfx");
-  const fileNameWithoutExt = path
-    .basename(filePath)
-    .replace(/\.qfx|.QFX|.ofx|.OFX$/, "");
-  const directory = path.dirname(filePath);
-
-  console.log("processFile: " + fileNameWithoutExt);
-
-  // console.log("fileNameWithoutExt: " + fileNameWithoutExt);
-  // console.log("directory: " + directory);
-
-  const content = readFileSync(filePath, "utf-8");
-  const transactionsList = qfxExtractTransactions(content);
-
-  let simplifiTransactions = transactionsList.map((transItem) => {
-    return {
-      Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
-      Payee: `${transItem.NAME} ${transItem.MEMO ?? ""}`.replace(/ +/g, " "),
-      Amount: (+transItem.TRNAMT).toFixed(2),
-    };
-  });
-
-  simplifiTransactions.sort(sortTransactionsByIsoDateFn);
-
-  simplifiTransactions = simplifiTransactions.map((transItem) => {
-    return {
-      ...transItem,
-      Date: convertIsoDateToSimplifiDate(transItem.Date),
-    };
-  });
-
-  writeTransactionsToCsv(simplifiTransactions, directory, fileNameWithoutExt);
 }
 
 // remove characters that may interfer with parsing or importing into Simplifi
@@ -138,9 +213,13 @@ function qfxExtractTransactions(
 
 function writeTransactionsToCsv(
   simplifiTransactions: SimplifiTransactionsInterface[],
-  directory: string,
-  fileNameWithoutExt: string
+  filePath: string
 ): void {
+  const fileNameWithoutExt = path
+    .basename(filePath)
+    .replace(/\.qfx|.QFX|.ofx|.OFX$/, "");
+  const directory = path.dirname(filePath);
+
   const csvContent = simplifiTransactions.reduce(
     (accumulator, currentValue) => {
       return (
