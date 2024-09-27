@@ -10,53 +10,9 @@ import {
 
 console.log(
   "-------------------------------------------------------------------------------\n" +
-    "------------------------ Simplifi CSV Formatter - QFX -------------------------------\n" +
+    "------------------------ Simplifi CSV Formatter - OFX/QFX -------------------------------\n" +
     "-------------------------------------------------------------------------------"
 );
-
-// function readFilesInChildDirectory(
-//   dirPath: string
-// ): SimplifiTransactionsInterface[] {
-//   const absolutePath = path.resolve(dirPath);
-
-//   // Read all items in the directory
-//   const file = readdirSync(absolutePath);
-//   let simplifiTransactions: SimplifiTransactionsInterface[] = [];
-
-//   file.forEach((item) => {
-//     const filePath = path.join(absolutePath, item);
-//     const stats = statSync(filePath);
-
-//     if (
-//       stats.isFile() &&
-//       (filePath.split(".").pop()?.toLowerCase() === "qfx" ||
-//         filePath.split(".").pop()?.toLowerCase() === "ofx")
-//     ) {
-//       const content = readFileSync(filePath, "utf-8");
-//       const transactionsList = qfxExtractTransactions(content);
-
-//       simplifiTransactions = [
-//         ...simplifiTransactions,
-//         ...transactionsList.map((transItem) => {
-//           return {
-//             Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
-//             Payee: `${transItem.NAME} ${transItem.MEMO ?? ""}`.replace(
-//               / +/g,
-//               " "
-//             ),
-//             Amount: (+transItem.TRNAMT).toFixed(2),
-//           };
-//         }),
-//       ];
-//     }
-//   });
-
-//   if (!file.length) {
-//     console.log("No .qfx files found in nested directory:  ", absolutePath);
-//   }
-
-//   return simplifiTransactions;
-// }
 
 function readTransactionsFromFile(
   childDirPath: string,
@@ -71,7 +27,7 @@ function readTransactionsFromFile(
       childFilePath.split(".").pop()?.toLowerCase() === "ofx")
   ) {
     const content = readFileSync(childFilePath, "utf-8");
-    const transactionsList = qfxExtractTransactions(content);
+    const transactionsList = ofxExtractTransactions(content);
 
     return [
       ...transactionsList.map((transItem) => {
@@ -115,12 +71,11 @@ function readTransactionsFromDirectory(
   return childSimplifiTransactions;
 }
 
-function readFilesInDirectory(dirPath: string): void {
+function parseOfxAndExportToSimplifyCsv(dirPath: string): void {
   const absolutePath = path.resolve(dirPath);
-
-  // Read all items in the directory
   const fileNameList = readdirSync(absolutePath);
-
+  
+  // Read all files/folders in the directory
   fileNameList.forEach((fileName) => {
     const filePath = path.join(absolutePath, fileName);
     const isDirectory = statSync(filePath).isDirectory();
@@ -132,22 +87,21 @@ function readFilesInDirectory(dirPath: string): void {
       ? readTransactionsFromDirectory(filePath)
       : readTransactionsFromFile(absolutePath, fileName);
 
+    simplifiTransactions.sort(sortTransactionsByIsoDateFn);
+    simplifiTransactions = simplifiTransactions.map((transItem) => {
+      return {
+        ...transItem,
+        Date: convertIsoDateToSimplifiDate(transItem.Date),
+      };
+    });
+
     if (simplifiTransactions.length) {
-      simplifiTransactions.sort(sortTransactionsByIsoDateFn);
-
-      simplifiTransactions = simplifiTransactions.map((transItem) => {
-        return {
-          ...transItem,
-          Date: convertIsoDateToSimplifiDate(transItem.Date),
-        };
-      });
-
       writeTransactionsToCsv(simplifiTransactions, filePath);
     }
   });
 
   if (!fileNameList.length) {
-    console.log("No .qfx files found in:  ", absolutePath);
+    console.log("No .OFX files found in:  ", absolutePath);
   }
 }
 
@@ -165,7 +119,7 @@ function ofxReduceNoise(contents: string) {
     .replace(/ +/g, " "); // 2+ spaces reduced to 1
 }
 
-function qfxExtractTransactions(
+function ofxExtractTransactions(
   contents: string
 ): OfxTransactionItemInterface[] {
   const transactionTagRegex = /<\/?(BANKTRANLIST)>/;
@@ -270,10 +224,9 @@ function main(): void {
     );
   }
 
-  // const rawFileDirectoryPath = "./original_ofx_files";
-
-  const rawFileDirectoryPath = "./csv-raw";
-  readFilesInDirectory(rawFileDirectoryPath);
+  const rawFileDirectoryPath = "./original_ofx_files";
+  // const rawFileDirectoryPath = "./csv-raw";
+  parseOfxAndExportToSimplifyCsv(rawFileDirectoryPath);
 }
 
 main();
