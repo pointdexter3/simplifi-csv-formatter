@@ -15,8 +15,6 @@
 
 # Future Enhancements
 - add filtering of transaction start/end date
-- address gaps in the new implementation
-    - support multiple combined files
 
 ## Minor
 
