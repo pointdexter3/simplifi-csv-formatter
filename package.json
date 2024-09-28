@@ -4,15 +4,8 @@
   "description": "",
   "main": "format-all-financial-institutions.js",
   "scripts": {
-    "start": "echo 'enter start date (blank for oldest)' && read start_date && echo 'enter end date (blank for most recent)' && read end_date && npm run parser $start_date $end_date",
     "parser": "tsc --p tsconfig.json && node ./dist/format-all-financial-institutions.js",
-
-    
-    "try to get this working1": "",
-    "prompt-start-date": "echo 'enter start date (blank for oldest)' && read start_date",
-    "prompt-end-date": "echo 'enter end date (blank for most recent)' && read end_date",
-    "default-args": "default_start_date=\"${start_date:-empty}\"; default_end_date=\"${end_date:-empty}\" && echo \"$default_start_date $default_end_date\"",
-    "try to get this working2": ""
+    "start": "echo 'enter date range start yyyy-mm-dd (blank for oldest)' && read start_date && echo 'enter date range end yyyy-mm-dd (blank for most recent)' && read end_date && default_start_date=\"${start_date:-default_date}\"; default_end_date=\"${end_date:-default_date}\" && npm run parser $default_start_date $default_end_date"
   },
   "author": "Randy Beard",
   "license": "MIT",

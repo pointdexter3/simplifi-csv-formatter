@@ -1,5 +1,12 @@
 import { XMLParser } from "fast-xml-parser";
-import { readFileSync, statSync, readdirSync, writeFileSync } from "fs";
+import {
+  readFileSync,
+  statSync,
+  readdirSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+} from "fs";
 import path from "path";
 import dayjs from "dayjs";
 import {
@@ -74,7 +81,7 @@ function readTransactionsFromDirectory(
 function parseOfxAndExportToSimplifyCsv(dirPath: string): void {
   const absolutePath = path.resolve(dirPath);
   const fileNameList = readdirSync(absolutePath);
-  
+
   // Read all files/folders in the directory
   fileNameList.forEach((fileName) => {
     const filePath = path.join(absolutePath, fileName);
@@ -87,6 +94,9 @@ function parseOfxAndExportToSimplifyCsv(dirPath: string): void {
       ? readTransactionsFromDirectory(filePath)
       : readTransactionsFromFile(absolutePath, fileName);
 
+    simplifiTransactions = simplifiTransactions.filter(
+      filterTranscationsByDateFn
+    );
     simplifiTransactions.sort(sortTransactionsByIsoDateFn);
     simplifiTransactions = simplifiTransactions.map((transItem) => {
       return {
@@ -95,9 +105,7 @@ function parseOfxAndExportToSimplifyCsv(dirPath: string): void {
       };
     });
 
-    if (simplifiTransactions.length) {
-      writeTransactionsToCsv(simplifiTransactions, filePath);
-    }
+    writeTransactionsToCsv(simplifiTransactions, filePath);
   });
 
   if (!fileNameList.length) {
@@ -114,7 +122,7 @@ function ofxReduceNoise(contents: string) {
     .replace(/#/g, "") // Remove hash signs
     .replace(/\*/g, " ") // Remove asterisks signs
     .replace(/\'/g, "") // Remove single quotes '
-    .replace(/\[[A-Za-z]{2}\]/g, "") // Remove 2 characters inside brackets [AB]
+    .replace(/\[|\]/g, " ") // Remove square brackets, add space after
     .replace(/B\/M/g, "") // Remove "B/M"
     .replace(/ +/g, " "); // 2+ spaces reduced to 1
 }
@@ -183,10 +191,17 @@ function writeTransactionsToCsv(
     },
     `"Date","Payee","Amount","Tags"\n` // SIMPLIFI CSV HEADER
   );
+
+  const generatedOutputDirectory =
+    directory + "/../generated_simplifi_csv_files/";
+  if (!existsSync(generatedOutputDirectory)) {
+    mkdirSync(generatedOutputDirectory);
+  }
+
   writeFileSync(
-    directory +
-      "/../generated_simplifi_csv_files/" +
+    generatedOutputDirectory +
       fileNameWithoutExt +
+      (!simplifiTransactions.length ? "-EMPTY" : "") +
       ".csv",
     csvContent
   );
@@ -204,6 +219,23 @@ function sortTransactionsByIsoDateFn(
   }
 }
 
+// date range is inclusive
+function filterTranscationsByDateFn(
+  transactionItem: SimplifiTransactionsInterface,
+  _index: number,
+  _array: SimplifiTransactionsInterface[]
+): transactionItem is SimplifiTransactionsInterface {
+  if (filterStartDateGlobal && transactionItem.Date < filterStartDateGlobal) {
+    return false;
+  }
+
+  if (filterEndDateGlobal && transactionItem.Date > filterEndDateGlobal) {
+    return false;
+  }
+
+  return true;
+}
+
 function convertOfxDateTimeToIsoDate(ofxDate: string): string {
   return dayjs(`${ofxDate}`.slice(0, 8), "YYYYMMDD").format("YYYY-MM-DD");
 }
@@ -212,20 +244,41 @@ function convertIsoDateToSimplifiDate(isoDate: string): string {
   return dayjs(isoDate, "YYYY-MM-DD").format("MM/DD/YYYY");
 }
 
-function main(): void {
-  const filterStart = process.argv.slice(2, 3);
-  const filterEnd = process.argv.slice(3, 4);
-
-  if (!!filterStart.length || !!filterEnd.length) {
-    console.log(
-      "DATE FILTERS: ",
-      "\nstart: " + filterStart,
-      "\nend: " + filterEnd + "\n"
-    );
+function dateParamReturnDateOrUndefined(filterDate: string) {
+  if (dayjs(filterDate, "YYYY-MM-DD").isValid() === false) {
+    if (filterDate !== "date_default") {
+      console.log(
+        "Date provided invalid. Using default instead: " + filterDate
+      );
+    }
+    return undefined;
+  } else {
+    return filterDate;
   }
+}
 
+function setGlobalFilterDates(): void {
+  const filterStart = process.argv.slice(2, 3)[0];
+  const filterEnd = process.argv.slice(3, 4)[0];
+  filterStartDateGlobal = dateParamReturnDateOrUndefined(filterStart);
+  filterEndDateGlobal = dateParamReturnDateOrUndefined(filterEnd);
+}
+
+function printFilterRange() {
+  console.log(
+    `Outputing transations for filter range: ${
+      filterStartDateGlobal ?? "OLDEST AVAILABLE"
+    } ⸺ ${filterEndDateGlobal ?? "NEWEST AVAILABLE"}\n`
+  );
+}
+
+let filterStartDateGlobal: string | undefined;
+let filterEndDateGlobal: string | undefined;
+
+function main(): void {
+  setGlobalFilterDates();
+  printFilterRange();
   const rawFileDirectoryPath = "./original_ofx_files";
-  // const rawFileDirectoryPath = "./csv-raw";
   parseOfxAndExportToSimplifyCsv(rawFileDirectoryPath);
 }
 

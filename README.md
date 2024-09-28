@@ -1,8 +1,8 @@
-# Simplifi CSV Formatter for Canadians 🇨🇦
+# Simplifi Manual OFX Import Tool for Canadians 🇨🇦
 
 
 
-Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing csv files from their banks.
+Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing OFX files from their banks.
 
 
 Simplifi requires transaction imports be in a specific format.
@@ -14,7 +14,7 @@ Simplifi requires transaction imports be in a specific format.
 |3/17/2020|Acme     |1735.21|                |
 
 <br><br>
-Download transactions from your bank in the .QFX file format. 
+Download transactions from your bank in the .OFX .QFX or Quicken file formats. 
 <br><br>
 
 Transactions available for download varies between financial institutions (Some allow previous 2 months, others Years). 
@@ -39,18 +39,21 @@ I will update the following table over time.
 ## Download Transactions
 
 - Download transactions from your financial institutions desktop website.
-- Select the QFX file option and save to the `/ofx-raw` directory
+- Select the OFX/QFX/Quicken file export option and save to the `/original_ofx_files` directory
 
 ## Run terminal command
 
 - Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
-- Copy/paste and enter the following command into the terminal `npm install`
-- Copy/paste and enter the following command into the terminal `npm run start`
-<!-- - Copy/paste the following command into the terminal `./format-all-financial-institutions.bash "2023-12-20"` (The date in quotes is the oldest transaction date you wish to import. If desired the date may be omitted). -->
+
+Then run either:
+`npm run start` (script will prompt for date range)
+`npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)
+`npm run parser` (run for all available transactions)
+
 - No errors should be shown in the terminal.
 
 ## Validate / Import into Simplifi
 
-- The formatted files will appear in the `/generated` directory.
+- The formatted files will appear in the `/generated_simplifi_csv_files` directory.
 - Validate that the format looks correct in the `.csv` files before importing into Simplifi.
 - Upload the files to Simplifi using their import option ** (take care to select the correct account in their dropdown when uploading) **

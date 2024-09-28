@@ -5,19 +5,8 @@
 
 # Clean up
 - remove old implementation and unused folders
-- update readme
 - address all major Tasks
 - merge release/r2 into Main
 
 
-# Bugs
-
-
-# Future Enhancements
-- add filtering of transaction start/end date
-
-## Minor
-
-
-## Major
 
