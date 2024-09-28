@@ -40,10 +40,9 @@ function readTransactionsFromFile(
       ...transactionsList.map((transItem) => {
         return {
           Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
-          Payee: `${transItem.NAME} ${transItem.MEMO ?? ""}`.replace(
-            / +/g,
-            " "
-          ),
+          Payee: `${transItem.NAME ? transItem.NAME + " " : ""}${
+            transItem.MEMO ?? ""
+          }`.replace(/ +/g, " "),
           Amount: (+transItem.TRNAMT).toFixed(2),
         };
       }),

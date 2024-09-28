@@ -15,7 +15,7 @@ export interface OfxTransactionItemInterface {
   DTPOSTED: OfxDateType;
   TRNAMT: number; // 2-digit number
   FITID: number; // 7.7777777777e30
-  NAME: string; // 32 character limit
+  NAME?: string; // 32 character limit // OFX required but sometimes FI's omit and use MEMO
   MEMO?: string; // OFX optional, often used by FI to get around NAME character limit
 }
 
