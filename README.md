@@ -1,8 +1,8 @@
-# Simplifi CSV Formatter for Canadians 🇨🇦
+# Simplifi Manual OFX Import Tool for Canadians 🇨🇦
 
 
 
-Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing csv files from their banks.
+Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing OFX files from their banks.
 
 
 Simplifi requires transaction imports be in a specific format.
@@ -14,14 +14,14 @@ Simplifi requires transaction imports be in a specific format.
 |3/17/2020|Acme     |1735.21|                |
 
 <br><br>
-Canadian Banks are all over the place with the format of their transaction CSV exporting.
+Download transactions from your bank in the .OFX .QFX or Quicken file formats. 
 <br><br>
 
-Availablility of downloading transactions to CSV varies between financial institutions (Some allow 2 months, others Years). 
+Transactions available for download varies between financial institutions (Some allow previous 2 months, others Years). 
 <br><br>
 I will update the following table over time.
 
-|Financial Institution|CSV Transaction Availability|
+|Financial Institution|Transaction Availability    |
 |---------------------|----------------------------|
 |BMO Mastercard       |3 Months                    |
 |BMO Chequing         |2 Months                    |
@@ -39,29 +39,22 @@ I will update the following table over time.
 ## Download Transactions
 
 - Download transactions from your financial institutions desktop website.
-- Select the CSV file option and save to the `/csv-raw` directory
-- Rename the `.csv` files to one of the following supported filenames (or simply overrite one of the existing empty files)
-
-|CSV Supported File Names    |
-|----------------------------|
-|bmo-chequing.csv            |
-|bmo-mastercard.csv          |
-|pc-financial-mastercard.csv |
-|scotiabank-visa.csv         |
-|tangerine-chequing.csv      |
-|tangerine-savings.csv       |
-|rbc-visa-csv-export.csv     |
-|rbc-visa-manual-copy.csv    |
-|td-visa.csv                 |
+- Select the OFX/QFX/Quicken file export option and save to the `/original_ofx_files` directory
+- Alternativly if a financial institution only exports single months at a time, create a directory such as `td-visa` within `/original_ofx_files` and save within. The resulting combined export will use the directory name (td-visa.csv).
 
 ## Run terminal command
 
 - Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
-- Copy/paste the following command into the terminal `./format-all-financial-institutions.bash "2023-12-20"` (The date in quotes is the oldest transaction date you wish to import. If desired the date may be omitted).
-- Hit Enter to run the formatter
+
+Then run either:
+`npm run start` (script will prompt for date range)
+`npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)
+`npm run parser` (run for all available transactions)
+
+- No errors should be shown in the terminal.
 
 ## Validate / Import into Simplifi
 
-- The formatted files will appear in the `/generated` directory.
+- The formatted files will appear in the `/generated_simplifi_csv_files` directory.
 - Validate that the format looks correct in the `.csv` files before importing into Simplifi.
 - Upload the files to Simplifi using their import option ** (take care to select the correct account in their dropdown when uploading) **

@@ -1,0 +1,5 @@
+node_modules
+generated_simplifi_csv_files
+original_ofx_files
+dist
+.DS_Store
