@@ -40,6 +40,7 @@ I will update the following table over time.
 
 - Download transactions from your financial institutions desktop website.
 - Select the OFX/QFX/Quicken file export option and save to the `/original_ofx_files` directory
+- Alternativly if a financial institution only exports single months at a time, create a directory such as `td-visa` within `/original_ofx_files` and save within. The resulting combined export will use the directory name (td-visa.csv).
 
 ## Run terminal command
 

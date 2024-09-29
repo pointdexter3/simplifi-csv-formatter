@@ -1,12 +1,1 @@
 
-# Tasks
-- import newly exported into simplifi
-
-
-# Clean up
-- remove old implementation and unused folders
-- address all major Tasks
-- merge release/r2 into Main
-
-
-

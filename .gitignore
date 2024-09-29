@@ -1,4 +1,5 @@
 node_modules
-generated
+generated_simplifi_csv_files
+original_ofx_files
 dist
 .DS_Store
