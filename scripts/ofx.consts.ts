@@ -1,5 +1,4 @@
 export type OfxDateType = "20240914195104.001[-5:EDT]"; //YYYYMMDDHHMMSS
-export type OfxCurrencyType = "CAD" | "USD";
 export type OfxTransactionType = "DEBIT" | "CREDIT";
 
 export interface OfxTransactionInterface {
