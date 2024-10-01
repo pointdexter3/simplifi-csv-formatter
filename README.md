@@ -48,10 +48,10 @@ Right click the `/csv-extractor` folder -> choose "Services" option -> choose "N
 
 Run `npm install` to install the dependencies.
 
-Then run either:\
-`npm run start` (script will prompt for date range)\
-`npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)\
-`npm run parser` (run for all available transactions)\
+Then run either:
+- `npm run start` (script will prompt for date range)
+- `npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)
+- `npm run parser` (run for all available transactions)
 
 - No errors should be shown in the terminal.
 
