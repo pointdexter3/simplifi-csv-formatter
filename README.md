@@ -45,6 +45,7 @@ I will update the following table over time.
 ## Run terminal command
 
 - Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
+Run `npm install` to install the dependencies.
 
 Then run either:
 `npm run start` (script will prompt for date range)
