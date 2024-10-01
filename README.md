@@ -53,7 +53,7 @@ Then run either:
 - `npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)
 - `npm run parser` (run for all available transactions)
 
-- No errors should be shown in the terminal.
+No errors should be shown in the terminal.
 
 ## Validate / Import into Simplifi
 
