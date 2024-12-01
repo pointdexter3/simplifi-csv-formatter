@@ -38,18 +38,38 @@ function readTransactionsFromFile(
 
     return [
       ...transactionsList.map((transItem) => {
+        // unfuck scotiabank OFX amount inconsistency
+        const transItemAmount = invertTransactionDebitCredit(+transItem.TRNAMT, childFile);
+
         return {
           Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
           Payee: `${transItem.NAME ? transItem.NAME + " " : ""}${
             transItem.MEMO ?? ""
           }`.replace(/ +/g, " "),
-          Amount: (+transItem.TRNAMT).toFixed(2),
+          Amount: transItemAmount.toFixed(2),
         };
       }),
     ];
   }
 
   return [];
+}
+ 
+/*
+  SCOTIABANK CC amounts are inverted for Debit/Credit type transactions
+  Other FI's have DEBIT transactions as negative and CREDIT transactions as positive
+
+  FUTURE ENHANCEMENT: if more edge cases arise for FI's I should update to extract the
+    institution ID from the OFX header  
+    (rather than going off the filename which users might override)
+*/
+function invertTransactionDebitCredit(transactionAmount: number, determineExceptionBasedOnFileName: string): number {
+
+  if(determineExceptionBasedOnFileName.toUpperCase().includes('SCOTIA')){
+    return transactionAmount * -1.0;
+  } else {
+    return transactionAmount;
+  }
 }
 
 function readTransactionsFromDirectory(

@@ -3,3 +3,5 @@ generated_simplifi_csv_files
 original_ofx_files
 dist
 .DS_Store
+bak
+generated_simplifi_csv_files.bak
