@@ -39,7 +39,10 @@ function readTransactionsFromFile(
     return [
       ...transactionsList.map((transItem) => {
         // unfuck scotiabank OFX amount inconsistency
-        const transItemAmount = invertTransactionDebitCredit(+transItem.TRNAMT, childFile);
+        const transItemAmount = invertTransactionDebitCredit(
+          +transItem.TRNAMT,
+          childFile
+        );
 
         return {
           Date: convertOfxDateTimeToIsoDate(transItem.DTPOSTED),
@@ -54,7 +57,7 @@ function readTransactionsFromFile(
 
   return [];
 }
- 
+
 /*
   SCOTIABANK CC amounts are inverted for Debit/Credit type transactions
   Other FI's have DEBIT transactions as negative and CREDIT transactions as positive
@@ -63,13 +66,16 @@ function readTransactionsFromFile(
     institution ID from the OFX header  
     (rather than going off the filename which users might override)
 */
-function invertTransactionDebitCredit(transactionAmount: number, determineExceptionBasedOnFileName: string): number {
-
-  if(determineExceptionBasedOnFileName.toUpperCase().includes('SCOTIA')){
-    return transactionAmount * -1.0;
-  } else {
+function invertTransactionDebitCredit(
+  transactionAmount: number,
+  determineExceptionBasedOnFileName: string
+): number {
+  // EDIT - POSSIBLY A TEMP BUG IN SCOTIABANK THAT WAS RESOLVED, GOING TO LEAVE COMMENTED FOR NOW
+  // if (determineExceptionBasedOnFileName.toUpperCase().includes("SCOTIA")) {
+  //   return transactionAmount * -1.0;
+  // } else {
     return transactionAmount;
-  }
+  // }
 }
 
 function readTransactionsFromDirectory(
@@ -189,7 +195,10 @@ function ofxExtractTransactions(
     "<BANKTRANLIST>" + contentsXmlFormat + "</BANKTRANLIST>" // add root tag
   ) as OfxTransactionInterface;
 
-  return jsonData.BANKTRANLIST.STMTTRN;
+  // parser returns a single object rather than an array if there is only one transaction
+  return Array.isArray(jsonData.BANKTRANLIST.STMTTRN)
+    ? jsonData.BANKTRANLIST.STMTTRN
+    : [jsonData.BANKTRANLIST.STMTTRN];
 }
 
 function writeTransactionsToCsv(
