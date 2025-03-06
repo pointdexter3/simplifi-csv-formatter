@@ -34,7 +34,7 @@ function readTransactionsFromFile(
       childFilePath.split(".").pop()?.toLowerCase() === "ofx")
   ) {
     const content = readFileSync(childFilePath, "utf-8");
-    const transactionsList = ofxExtractTransactions(content);
+    const transactionsList = content ? ofxExtractTransactions(content) : [];
 
     return [
       ...transactionsList.map((transItem) => {
