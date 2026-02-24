@@ -19,18 +19,6 @@ Download transactions from your bank in the .OFX .QFX or Quicken file formats.
 
 Transactions available for download varies between financial institutions (Some allow previous 2 months, others Years). 
 <br><br>
-I will update the following table over time.
-
-|Financial Institution|Transaction Availability    |
-|---------------------|----------------------------|
-|BMO Mastercard       |3 Months                    |
-|BMO Chequing         |2 Months                    |
-|PC Mastercard        |1 Year                      |
-|RBC Visa             |1 Month! (*ALL TRANSACTIONS COPY/PASTE into numbers and format the date to yyyy-mm-dd*)|
-|Scotiabank Visa      |1 Year (All transactions?)  |
-|TD Visa              |6 Months (Individual statement CSV files)|
-|Tangerine Chequing   |5 Years                     |
-|Tangerine Savings    |5 Years                     |
 
 
 # How to use:
@@ -40,23 +28,32 @@ I will update the following table over time.
 
 - Download transactions from your financial institutions desktop website.
 - Select the OFX/QFX/Quicken file export option and save to the `/original_ofx_files` directory
-- Alternativly if a financial institution only exports single months at a time, create a directory such as `td-visa` within `/original_ofx_files` and save within. The resulting combined export will use the directory name (td-visa.csv).
+
+- Alternativly if a financial institution requires you to export as individual statements, create a directory such as `td-visa` inside of the `/original_ofx_files`, and then save  statement files within `td-visa`. The resulting combined export will use the directory name (td-visa.csv).
 
 ## Run terminal command
 
-Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
+- Right click the `/csv-extractor` folder -> choose "Services" option -> choose "New Terminal At Folder"`.
 
-Run `npm install` to install the dependencies.
+- Run `npm install` to install the dependencies.
 
-Then run either:
-- `npm run start` (script will prompt for date range)
-- `npm run parser 2024-09-01 2024-09-20` (provide date range without prompts)
-- `npm run parser` (run for all available transactions)
+- Then run `npm run all_in_one` (this command runs the entire process from start to finish including conversion, removing duplicates transactions that appear in previous exports, archiving, and copying empty template files for the next run).
 
-No errors should be shown in the terminal.
+- If no errors are shown in the terminal, the process completed successfully. Move on to validate.
 
 ## Validate / Import into Simplifi
 
-- The formatted files will appear in the `/generated_simplifi_csv_files` directory.
+- The formatted files will appear in the most recent `archive/YYYY-MM-DD_to_YYYY-MM-DD/generated_simplifi_csv_files` directory.
+
 - Validate that the format looks correct in the `.csv` files before importing into Simplifi.
-- Upload the files to Simplifi using their import option ** (take care to select the correct account in their dropdown when uploading) **
+
+- Upload the files to Simplifi using their import option ** (take care to select the correct account in their dropdown when uploading as undoing imports is manual and tedious) **
+
+
+## Tips (VERY IMPORTANT TO READ)
+
+- Take care with consistently naming the OFX files when downloading from your financial institution. For example, if you inconsisently named your files between imports `scotiabank-cc` and `scotiabank-visa`, the script will treat those as two separate accounts and not remove duplicate transactions between the two exports.
+
+- Save empty template files for each of your accounts in the `template/original_ofx_files` directory. This way when you download the OFX files from your financial institution you don't need to worry about consistently naming the files each time.
+
+- Take advantage of Simplifi's rules feature to automatically categorize transactions and assign tags. This will save you a lot of time and effort in the long run (At this point I download the transactions, import into Simplifi, and then quickly skim through at my leisure to make sure all my transfers are categorized correctly)

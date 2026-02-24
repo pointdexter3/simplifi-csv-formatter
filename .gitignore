@@ -1,7 +1,20 @@
 node_modules
-generated_simplifi_csv_files
-original_ofx_files
+
 dist
 .DS_Store
 bak
-generated_simplifi_csv_files.bak
+archive
+generated_simplifi_csv_files
+previous_generated_simplifi_csv_files
+
+# the root one only
+original_ofx_files
+
+# allow template/original_ofx_files directory but ignore all files by default
+!template/original_ofx_files/
+template/original_ofx_files/*
+
+# allow specific file patterns in template/original_ofx_files
+!template/original_ofx_files/readme.md
+!template/original_ofx_files/bankname-*.ofx
+

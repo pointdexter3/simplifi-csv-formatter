@@ -109,6 +109,12 @@ function parseOfxAndExportToSimplifyCsv(dirPath: string): void {
 
   // Read all files/folders in the directory
   fileNameList.forEach((fileName) => {
+
+    if (fileName === ".DS_Store") {
+      return; // Ignore .DS_Store files
+    }
+
+    console.log("reading: " + fileName);
     const filePath = path.join(absolutePath, fileName);
     const isDirectory = statSync(filePath).isDirectory();
 
