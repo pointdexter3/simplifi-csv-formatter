@@ -1,12 +1,14 @@
 {
   "name": "csv-extractor",
-  "version": "2.0.0",
-  "description": "",
-  "main": "format-all-financial-institutions.js",
+  "version": "3.0.0",
+  "description": "A script to convert OFX files downloaded from financial institutions into CSV files formatted for import into Simplifi",
   "scripts": {
+    "all_in_one": "tsc --p tsconfig.json && node ./dist/all_in_one.js && npm run parser && npm run remove_duplicate_transactions && npm run archive && npm run copy_empty_templates",
     "parser": "tsc --p tsconfig.json && node ./dist/format-all-financial-institutions.js",
-    "start": "echo 'enter date range start yyyy-mm-dd (blank for oldest)' && read start_date && echo 'enter date range end yyyy-mm-dd (blank for most recent)' && read end_date && default_start_date=\"${start_date:-default_date}\"; default_end_date=\"${end_date:-default_date}\" && npm run parser $default_start_date $default_end_date",
-    "dev-debug": "diff -r ./generated_simplifi_csv_files.bak ./generated_simplifi_csv_files | grep -E \"^(Only in|diff|> )\""
+    "remove_duplicate_transactions": "tsc --p tsconfig.json && node ./dist/remove_duplicate_transactions.js",
+    "archive": "tsc --p tsconfig.json && node ./dist/archive.js",
+    "copy_empty_templates": "tsc --p tsconfig.json && node ./dist/copy_empty_templates.js",
+    "parser_using_date": "echo 'enter date range start yyyy-mm-dd (blank for oldest)' && read start_date && echo 'enter date range end yyyy-mm-dd (blank for most recent)' && read end_date && default_start_date=\"${start_date:-default_date}\"; default_end_date=\"${end_date:-default_date}\" && npm run parser $default_start_date $default_end_date"
   },
   "author": "Randy Beard",
   "license": "MIT",
