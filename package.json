@@ -1,14 +1,18 @@
 {
   "name": "csv-extractor",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A script to convert OFX files downloaded from financial institutions into CSV files formatted for import into Simplifi",
   "scripts": {
+    "run_script": "npm i && npm run all_in_one",
     "all_in_one": "tsc --p tsconfig.json && node ./dist/all_in_one.js && npm run parser && npm run remove_duplicate_transactions && npm run archive && npm run copy_empty_templates",
     "parser": "tsc --p tsconfig.json && node ./dist/format-all-financial-institutions.js",
     "remove_duplicate_transactions": "tsc --p tsconfig.json && node ./dist/remove_duplicate_transactions.js",
     "archive": "tsc --p tsconfig.json && node ./dist/archive.js",
     "copy_empty_templates": "tsc --p tsconfig.json && node ./dist/copy_empty_templates.js",
-    "parser_using_date": "echo 'enter date range start yyyy-mm-dd (blank for oldest)' && read start_date && echo 'enter date range end yyyy-mm-dd (blank for most recent)' && read end_date && default_start_date=\"${start_date:-default_date}\"; default_end_date=\"${end_date:-default_date}\" && npm run parser $default_start_date $default_end_date"
+    "parser_using_date": "echo 'enter date range start yyyy-mm-dd (blank for oldest)' && read start_date && echo 'enter date range end yyyy-mm-dd (blank for most recent)' && read end_date && default_start_date=\"${start_date:-default_date}\"; default_end_date=\"${end_date:-default_date}\" && npm run parser $default_start_date $default_end_date",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "author": "Randy Beard",
   "license": "MIT",
@@ -18,5 +22,11 @@
     "fast-xml-parser": "^4.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1"
   }
 }

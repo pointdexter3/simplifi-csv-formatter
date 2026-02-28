@@ -1,28 +1,5 @@
-# Simplifi Manual OFX Import Tool for Canadians 🇨🇦
+# HOW TO USE THIS SCRIPT TO IMPORT TRANSACTIONS INTO SIMPLIFI
 
-
-
-Utility for the budgeting app [Simplifi](https://www.quicken.com/products/simplifi/) intended for those that prefer manually importing OFX files from their banks.
-
-
-Simplifi requires transaction imports be in a specific format.
-
-|Date     |Payee    |Amount |Tags            |
-|---------|---------|-------|----------------|
-|3/13/2020|Starbucks|-7     |Vacation        |
-|3/15/2020|Uber     |-21.12 |Hawaii, Vacation|
-|3/17/2020|Acme     |1735.21|                |
-
-<br><br>
-Download transactions from your bank in the .OFX .QFX or Quicken file formats. 
-<br><br>
-
-Transactions available for download varies between financial institutions (Some allow previous 2 months, others Years). 
-<br><br>
-
-
-# How to use:
-- git clone / download the repo.
 
 ## Download Transactions
 

@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs";
-import path from "path";
+import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import path from "node:path";
 
 console.log("Remove duplicate transactions script - removing overlapping transactions...");
 
-function getLastLine(filePath: string): string | null {
+export function getLastLine(filePath: string): string | null {
   const content = readFileSync(filePath, "utf-8");
   const lines = content.trim().split("\n");
   
@@ -11,12 +11,12 @@ function getLastLine(filePath: string): string | null {
     return null;
   }
   
-  return lines[lines.length - 1];
+  return lines.at(-1) ?? null;
 }
 
 function removeDuplicateTransactions(fileName: string): void {
-  const previousFilePath = path.resolve(`./previous_generated_simplifi_csv_files/${fileName}`);
-  const currentFilePath = path.resolve(`./generated_simplifi_csv_files/${fileName}`);
+  const previousFilePath = path.resolve(`./simplifi_transaction_files/previous_generated_simplifi_csv_files/${fileName}`);
+  const currentFilePath = path.resolve(`./simplifi_transaction_files/generated_simplifi_csv_files/${fileName}`);
   
   if (!existsSync(previousFilePath)) {
     console.log(`No previous file found for ${fileName}, skipping deduplication`);
@@ -69,7 +69,7 @@ function removeDuplicateTransactions(fileName: string): void {
 }
 
 function processAllFiles(): void {
-  const generatedCsvPath = path.resolve("./generated_simplifi_csv_files");
+  const generatedCsvPath = path.resolve("./simplifi_transaction_files/generated_simplifi_csv_files");
   
   if (!existsSync(generatedCsvPath)) {
     throw new Error("generated_simplifi_csv_files folder does not exist");
@@ -102,4 +102,8 @@ function main(): void {
   }
 }
 
-main();
+// Only run main() if this file is executed directly (not imported as a module)
+// This allows the script to be imported in tests without executing main()
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
