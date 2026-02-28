@@ -15,8 +15,8 @@ export function getLastLine(filePath: string): string | null {
 }
 
 function removeDuplicateTransactions(fileName: string): void {
-  const previousFilePath = path.resolve(`./previous_generated_simplifi_csv_files/${fileName}`);
-  const currentFilePath = path.resolve(`./generated_simplifi_csv_files/${fileName}`);
+  const previousFilePath = path.resolve(`./simplifi_transaction_files/previous_generated_simplifi_csv_files/${fileName}`);
+  const currentFilePath = path.resolve(`./simplifi_transaction_files/generated_simplifi_csv_files/${fileName}`);
   
   if (!existsSync(previousFilePath)) {
     console.log(`No previous file found for ${fileName}, skipping deduplication`);
@@ -69,7 +69,7 @@ function removeDuplicateTransactions(fileName: string): void {
 }
 
 function processAllFiles(): void {
-  const generatedCsvPath = path.resolve("./generated_simplifi_csv_files");
+  const generatedCsvPath = path.resolve("./simplifi_transaction_files/generated_simplifi_csv_files");
   
   if (!existsSync(generatedCsvPath)) {
     throw new Error("generated_simplifi_csv_files folder does not exist");

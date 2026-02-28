@@ -1,1 +1,0 @@
-This folder contains the previously generated Simplifi CSV files.

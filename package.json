@@ -3,6 +3,7 @@
   "version": "3.0.1",
   "description": "A script to convert OFX files downloaded from financial institutions into CSV files formatted for import into Simplifi",
   "scripts": {
+    "run_script": "npm i && npm run all_in_one",
     "all_in_one": "tsc --p tsconfig.json && node ./dist/all_in_one.js && npm run parser && npm run remove_duplicate_transactions && npm run archive && npm run copy_empty_templates",
     "parser": "tsc --p tsconfig.json && node ./dist/format-all-financial-institutions.js",
     "remove_duplicate_transactions": "tsc --p tsconfig.json && node ./dist/remove_duplicate_transactions.js",

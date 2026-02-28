@@ -27,7 +27,7 @@ export function copyTemplateFiles(basePath: string = "./"): void {
 
 function main(): void {
   try {
-    copyTemplateFiles();
+    copyTemplateFiles("./simplifi_transaction_files/");
   } catch (error) {
     console.error(`\nTemplate copy failed: ${error instanceof Error ? error.message : error}`);
     process.exit(1);

@@ -235,7 +235,7 @@ function writeTransactionsToCsv(
   );
 
   const generatedOutputDirectory =
-    directory + "/../generated_simplifi_csv_files/";
+    directory + "/../generated_simplifi_csv_files/";  // relative to simplifi/original_ofx_files → simplifi/generated_simplifi_csv_files
   if (!existsSync(generatedOutputDirectory)) {
     mkdirSync(generatedOutputDirectory);
   }
@@ -320,7 +320,7 @@ let filterEndDateGlobal: string | undefined;
 function main(): void {
   setGlobalFilterDates();
   printFilterRange();
-  const rawFileDirectoryPath = "./original_ofx_files";
+  const rawFileDirectoryPath = "./simplifi_transaction_files/original_ofx_files";
   parseOfxAndExportToSimplifyCsv(rawFileDirectoryPath);
 }
 

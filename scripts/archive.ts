@@ -136,7 +136,7 @@ export function deletePreviousGeneratedFolder(basePath: string = "./"): void {
 
 function main(): void {
   try {
-    const basePath = "./";
+    const basePath = "./simplifi_transaction_files/";
     const newArchivePath = createNewArchiveFolder(basePath);
     moveFoldersToArchive(newArchivePath, basePath);
     deletePreviousGeneratedFolder(basePath);
