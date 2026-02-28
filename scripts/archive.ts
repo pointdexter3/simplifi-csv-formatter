@@ -1,11 +1,13 @@
-import { readdirSync, mkdirSync, existsSync, renameSync, cpSync, rmSync } from "fs";
-import path from "path";
+import { readdirSync, mkdirSync, existsSync, renameSync, cpSync, rmSync } from "node:fs";
+import path from "node:path";
 import dayjs from "dayjs";
+import { validateRelativePath } from "./validation.js";
 
 console.log("Archive script - creating new archive folder...");
 
-function getNewestArchiveFolder(): string | null {
-  const archivePath = path.resolve("./archive");
+export function getNewestArchiveFolder(basePath: string = "./"): string | null {
+  validateRelativePath(basePath);
+  const archivePath = path.resolve(basePath, "archive");
   
   if (!existsSync(archivePath)) {
     console.log("Archive directory does not exist, creating it...");
@@ -24,18 +26,20 @@ function getNewestArchiveFolder(): string | null {
   }
 
   // Sort folders to get the newest (last alphabetically due to date format)
-  folders.sort();
-  return folders[folders.length - 1];
+  folders.sort((a, b) => a.localeCompare(b));
+  return folders.at(-1) ?? null;
 }
 
-function extractToDate(folderName: string): string {
+export function extractToDate(folderName: string): string {
   // Extract the date after "_to_"
-  const match = folderName.match(/_to_(\d{4}-\d{2}-\d{2})$/);
+  const regex = /_to_(\d{4}-\d{2}-\d{2})$/;
+  const match = regex.exec(folderName);
   return match ? match[1] : "";
 }
 
-function createNewArchiveFolder(): string {
-  const newestFolder = getNewestArchiveFolder();
+export function createNewArchiveFolder(basePath: string = "./"): string {
+  validateRelativePath(basePath);
+  const newestFolder = getNewestArchiveFolder(basePath);
   
   let fromDate: string;
   
@@ -53,7 +57,7 @@ function createNewArchiveFolder(): string {
   console.log(`Current date (to-date): ${currentDate}`);
   
   const newFolderName = `${fromDate}_to_${currentDate}`;
-  const newFolderPath = path.resolve("./archive", newFolderName);
+  const newFolderPath = path.resolve(basePath, "archive", newFolderName);
   
   if (existsSync(newFolderPath)) {
     console.log(`Folder already exists: ${newFolderName}`);
@@ -70,7 +74,8 @@ function createNewArchiveFolder(): string {
   return newFolderPath;
 }
 
-function moveFoldersToArchive(archiveFolderPath: string): void {
+export function moveFoldersToArchive(archiveFolderPath: string, basePath: string = "./"): void {
+  validateRelativePath(basePath);
   console.log("\nMoving folders to archive...");
   
   const foldersToArchive = [
@@ -79,7 +84,7 @@ function moveFoldersToArchive(archiveFolderPath: string): void {
   ];
   
   foldersToArchive.forEach((folderName) => {
-    const sourcePath = path.resolve(`./${folderName}`);
+    const sourcePath = path.resolve(basePath, folderName);
     const destinationPath = path.join(archiveFolderPath, folderName);
     
     if (!existsSync(sourcePath)) {
@@ -93,11 +98,12 @@ function moveFoldersToArchive(archiveFolderPath: string): void {
   console.log("\nMove to archive complete!");
 }
 
-function createPreviousGeneratedFolder(archiveFolderPath: string): void {
+export function createPreviousGeneratedFolder(archiveFolderPath: string, basePath: string = "./"): void {
+  validateRelativePath(basePath);
   console.log("\nCreating previous_generated_simplifi_csv_files folder...");
   
   const archivedCsvPath = path.join(archiveFolderPath, "generated_simplifi_csv_files");
-  const previousCsvPath = path.resolve("./previous_generated_simplifi_csv_files");
+  const previousCsvPath = path.resolve(basePath, "previous_generated_simplifi_csv_files");
   
   if (!existsSync(archivedCsvPath)) {
     throw new Error(`Archived CSV folder does not exist: ${archivedCsvPath}`);
@@ -112,10 +118,11 @@ function createPreviousGeneratedFolder(archiveFolderPath: string): void {
   console.log("\nArchive process complete!");
 }
 
-function deletePreviousGeneratedFolder(): void {
+export function deletePreviousGeneratedFolder(basePath: string = "./"): void {
+  validateRelativePath(basePath);
   console.log("\nDeleting existing previous_generated_simplifi_csv_files folder...");
   
-  const previousCsvPath = path.resolve("./previous_generated_simplifi_csv_files");
+  const previousCsvPath = path.resolve(basePath, "previous_generated_simplifi_csv_files");
   
   if (existsSync(previousCsvPath)) {
     rmSync(previousCsvPath, { recursive: true, force: true });
@@ -129,14 +136,19 @@ function deletePreviousGeneratedFolder(): void {
 
 function main(): void {
   try {
-    const newArchivePath = createNewArchiveFolder();
-    moveFoldersToArchive(newArchivePath);
-    deletePreviousGeneratedFolder();
-    createPreviousGeneratedFolder(newArchivePath);
+    const basePath = "./";
+    const newArchivePath = createNewArchiveFolder(basePath);
+    moveFoldersToArchive(newArchivePath, basePath);
+    deletePreviousGeneratedFolder(basePath);
+    createPreviousGeneratedFolder(newArchivePath, basePath);
   } catch (error) {
     console.error(`\nArchive process failed: ${error instanceof Error ? error.message : error}`);
     process.exit(1);
   }
 }
 
-main();
+// Only run main() if this file is executed directly (not imported as a module)
+// This allows the script to be imported in tests without executing main()
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

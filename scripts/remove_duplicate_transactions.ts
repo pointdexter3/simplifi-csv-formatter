@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs";
-import path from "path";
+import { readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import path from "node:path";
 
 console.log("Remove duplicate transactions script - removing overlapping transactions...");
 
-function getLastLine(filePath: string): string | null {
+export function getLastLine(filePath: string): string | null {
   const content = readFileSync(filePath, "utf-8");
   const lines = content.trim().split("\n");
   
@@ -11,7 +11,7 @@ function getLastLine(filePath: string): string | null {
     return null;
   }
   
-  return lines[lines.length - 1];
+  return lines.at(-1) ?? null;
 }
 
 function removeDuplicateTransactions(fileName: string): void {
@@ -102,4 +102,8 @@ function main(): void {
   }
 }
 
-main();
+// Only run main() if this file is executed directly (not imported as a module)
+// This allows the script to be imported in tests without executing main()
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

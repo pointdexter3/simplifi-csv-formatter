@@ -1,4 +1,4 @@
-import * as readline from "readline";
+import * as readline from "node:readline";
 
 console.log("All-in-one script - pre-execution checks...\n");
 
@@ -34,21 +34,17 @@ async function promptUser(): Promise<boolean> {
   return true;
 }
 
-async function main(): Promise<void> {
-  try {
-    const confirmed = await promptUser();
-    
-    if (!confirmed) {
-      process.exit(1);
-    }
-
-    console.log("\n✓ All checks confirmed. Proceeding with execution...\n");
-    process.exit(0);
-    
-  } catch (error) {
-    console.error(`\nAll-in-one script failed: ${error instanceof Error ? error.message : error}`);
+try {
+  const confirmed = await promptUser();
+  
+  if (!confirmed) {
     process.exit(1);
   }
-}
 
-main();
+  console.log("\n✓ All checks confirmed. Proceeding with execution...\n");
+  process.exit(0);
+  
+} catch (error) {
+  console.error(`\nAll-in-one script failed: ${error instanceof Error ? error.message : error}`);
+  process.exit(1);
+}

@@ -1,11 +1,13 @@
-import { cpSync, mkdirSync, existsSync } from "fs";
-import path from "path";
+import { cpSync, mkdirSync, existsSync } from "node:fs";
+import path from "node:path";
+import { validateRelativePath } from "./validation.js";
 
 console.log("Copy empty templates script - copying template files...");
 
-function copyTemplateFiles(): void {
-  const templatePath = path.resolve("./template/original_ofx_files");
-  const destinationPath = path.resolve("./original_ofx_files");
+export function copyTemplateFiles(basePath: string = "./"): void {
+  validateRelativePath(basePath);
+  const templatePath = path.resolve(basePath, "template/original_ofx_files");
+  const destinationPath = path.resolve(basePath, "original_ofx_files");
   
   if (!existsSync(templatePath)) {
     throw new Error(`Template folder does not exist: ${templatePath}`);
@@ -32,4 +34,8 @@ function main(): void {
   }
 }
 
-main();
+// Only run main() if this file is executed directly (not imported as a module)
+// This allows the script to be imported in tests without executing main()
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
