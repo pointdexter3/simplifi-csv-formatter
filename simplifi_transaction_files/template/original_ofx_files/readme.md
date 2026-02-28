@@ -1,4 +1,3 @@
 This folder contains the original OFX files that were used to generate the Simplifi CSV files. The file names are the same as the generated CSV files, but with an .ofx extension instead of .csv.
 
 Filenames are used to compare the original OFX files to the generated CSV files in order to identify any duplicate transactions from previous exports in your archive. If a duplicate transaction is found, it is removed from the generated CSV file.
-
