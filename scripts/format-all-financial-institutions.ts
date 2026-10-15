@@ -174,35 +174,46 @@ export function ofxExtractTransactions(
 
   transactionsTagContents = ofxReduceNoise(transactionsTagContents);
 
-  // remove <DTSTART>value and <DTEND>value without closing tags (messes up parser)
-  transactionsTagContents = transactionsTagContents.replace(
-    /.*?(<STMTTRN>.*)/s,
-    "$1",
-  );
+  // OFX 2.x XML already has closing tags on all elements — parse directly.
+  // OFX 1.x SGML has no closing tags on leaf elements — add them first.
+  // NOTE: </STMTTRN> appears in BOTH formats (it's a block-level tag in SGML too).
+  // Use a leaf-level tag like </TRNTYPE> which only exists in OFX 2.x XML.
+  const isXmlFormat = /<\/TRNTYPE>/.test(transactionsTagContents);
 
-  // split tag pairs using new line
-  const contentsXmlFormatMinusClosingTag = transactionsTagContents.replaceAll(
-    "<",
-    "\n<",
-  );
-  // create array to iterate through tag pairs
-  const lines = contentsXmlFormatMinusClosingTag.split("\n");
+  let contentsXmlFormat: string;
 
-  // add closing tags to tag/value pairs
-  const contentsXmlFormat = lines
-    .map((line) => {
-      const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
-      const match = regexFindTagAndValueWithMissingClosingTag.exec(line);
-      if (match) {
-        const tagName = match[1].trim();
-        const value = match[2].trim();
-        // add closing tag
-        return `<${tagName}>${value}</${tagName}>`;
-      } else {
-        return line;
-      }
-    })
-    .join("");
+  if (isXmlFormat) {
+    // OFX 2.x XML: already valid XML, pass through as-is
+    contentsXmlFormat = transactionsTagContents;
+  } else {
+    // OFX 1.x SGML: remove <DTSTART>value and <DTEND>value without closing tags (messes up parser)
+    transactionsTagContents = transactionsTagContents.replace(
+      /.*?(<STMTTRN>.*)/s,
+      "$1",
+    );
+
+    // split tag pairs using new line
+    const contentsXmlFormatMinusClosingTag =
+      transactionsTagContents.replaceAll("<", "\n<");
+    // create array to iterate through tag pairs
+    const lines = contentsXmlFormatMinusClosingTag.split("\n");
+
+    // add closing tags to tag/value pairs
+    contentsXmlFormat = lines
+      .map((line) => {
+        const regexFindTagAndValueWithMissingClosingTag = /^<(.*)>(.+)$/;
+        const match = regexFindTagAndValueWithMissingClosingTag.exec(line);
+        if (match) {
+          const tagName = match[1].trim();
+          const value = match[2].trim();
+          // add closing tag
+          return `<${tagName}>${value}</${tagName}>`;
+        } else {
+          return line;
+        }
+      })
+      .join("");
+  }
 
   const parser = new XMLParser();
   const jsonData = parser.parse(

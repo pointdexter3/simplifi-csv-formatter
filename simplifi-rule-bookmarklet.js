@@ -20,7 +20,7 @@
 // save into the URL field of a new Chrome bookmark (bookmarklet how to guide https://www.freecodecamp.org/news/what-are-bookmarklets/)
 
 
-// javascript:(async function(){const delay=ms=>new Promise(r=>setTimeout(r,ms));function waitForElement(s,t){t=t||8000;return new Promise(function(res,rej){var d=Date.now()+t,iv=setInterval(function(){var e=document.querySelector(s);if(e){clearInterval(iv);res(e);return;}if(Date.now()>d){clearInterval(iv);rej(new Error('Timeout: '+s));}},200);});}function waitForElementGone(s,t){t=t||8000;return new Promise(function(res,rej){var d=Date.now()+t,iv=setInterval(function(){var e=document.querySelector(s);if(!e){clearInterval(iv);res();return;}if(Date.now()>d){clearInterval(iv);rej(new Error('Timeout gone: '+s));}},200);});}var rl=document.querySelector('#rules-list');if(!rl){alert('Could not find #rules-list');return;}var total=document.querySelectorAll('[id="rules-list-three-dot-menu"]').length;if(!total){alert('No rule menu buttons found');return;}var ov=document.createElement('div');ov.style.cssText='position:fixed;top:16px;right:16px;z-index:999999;background:#1a1a2e;color:#e0e0ff;font:14px/1.5 monospace;padding:12px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5);min-width:260px;pointer-events:none';document.body.appendChild(ov);var skipped=0;for(var i=0;i<total;i++){ov.innerHTML='<b>Simplifi Rule Updater</b><br>Rule '+(i+1)+' / '+total+'&hellip;';try{var btns=document.querySelectorAll('[id="rules-list-three-dot-menu"]');if(!btns[i])throw new Error('btn missing at '+i);btns[i].click();await delay(600);var ed=await waitForElement('#edit-rule');ed.click();await delay(800);var s1=await waitForElement('#rule-form-submit-button');s1.click();await delay(800);var s2=await waitForElement('#rule-form-submit-button');s2.click();await waitForElementGone('#rule-form-submit-button',8000);await delay(600);}catch(e){console.warn('[Simplifi Updater] Rule '+(i+1)+' skipped:',e.message);skipped++;document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await delay(800);}}ov.remove();alert('Simplifi Rule Updater done!\n\n'+(total-skipped)+' of '+total+' rules updated.'+(skipped>0?'\n'+skipped+' skipped - see F12 console.':''));})();
+// javascript:(async function(){const delay=ms=>new Promise(r=>setTimeout(r,ms));function waitForElement(s,t){t=t||8000;return new Promise(function(res,rej){var d=Date.now()+t,iv=setInterval(function(){var e=document.querySelector(s);if(e){clearInterval(iv);res(e);return;}if(Date.now()>d){clearInterval(iv);rej(new Error('Timeout: '+s));}},200);});}function waitForElementGone(s,t){t=t||8000;return new Promise(function(res,rej){var d=Date.now()+t,iv=setInterval(function(){var e=document.querySelector(s);if(!e){clearInterval(iv);res();return;}if(Date.now()>d){clearInterval(iv);rej(new Error('Timeout gone: '+s));}},200);});}var rl=document.querySelector('#rules-list');if(!rl){alert('Could not find #rules-list');return;}var total=document.querySelectorAll('[id="rules-list-three-dot-menu-button"]').length;if(!total){alert('No rule menu buttons found');return;}var ov=document.createElement('div');ov.style.cssText='position:fixed;top:16px;right:16px;z-index:999999;background:#1a1a2e;color:#e0e0ff;font:14px/1.5 monospace;padding:12px 18px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5);min-width:260px;pointer-events:none';document.body.appendChild(ov);var skipped=0;for(var i=0;i<total;i++){ov.innerHTML='<b>Simplifi Rule Updater</b><br>Rule '+(i+1)+' / '+total+'&hellip;';try{var btns=document.querySelectorAll('[id="rules-list-three-dot-menu-button"]');if(!btns[i])throw new Error('btn missing at '+i);btns[i].click();await delay(600);var ed=await waitForElement('#edit-rule');ed.click();await delay(800);var s1=await waitForElement('#rule-form-submit-button');s1.click();await delay(800);var s2=await waitForElement('#rule-form-submit-button');s2.click();await waitForElementGone('#rule-form-submit-button',8000);await delay(600);}catch(e){console.warn('[Simplifi Updater] Rule '+(i+1)+' skipped:',e.message);skipped++;document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await delay(800);}}ov.remove();alert('Simplifi Rule Updater done!\n\n'+(total-skipped)+' of '+total+' rules updated.'+(skipped>0?'\n'+skipped+' skipped - see F12 console.':''));})();
 
 
 
@@ -91,7 +91,7 @@
     return;
   }
 
-  var initialButtons = document.querySelectorAll('[id="rules-list-three-dot-menu"]');
+  var initialButtons = document.querySelectorAll('[id="rules-list-three-dot-menu-button"]');
   var total = initialButtons.length;
   if (total === 0) {
     alert('No rule menu buttons found.\nMake sure the rules list has finished loading.');
@@ -108,7 +108,7 @@
 
     try {
       // Re-query every iteration — the SPA may re-render the list between rounds
-      var menuButtons = document.querySelectorAll('[id="rules-list-three-dot-menu"]');
+      var menuButtons = document.querySelectorAll('[id="rules-list-three-dot-menu-button"]');
       var menuBtn = menuButtons[i];
       if (!menuBtn) throw new Error('Three-dot button not found at index ' + i);
 
